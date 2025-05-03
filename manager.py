@@ -6,7 +6,9 @@ import json
 #custom imports 
 from settings import *
 from components import *
-from enum import Enum 
+from enum import Enum
+
+import settings 
 
 
 class MenuManager:
@@ -18,6 +20,10 @@ class MenuManager:
         self._all_menus: Dict[Menu, List[Menu]] = {self.side_menu : []} 
         self.side_menu.menu_list = self.read_file()
         self.buttons_of_menu_names(self.side_menu)
+        #adding setting button to Side_menu
+        self.settings_button = Button(self.side_menu.width * .2, 1000, 256, 256, self.side_menu, "settings")
+        self.side_menu.buttons.append(self.settings_button)
+        self.side_menu.button_matrix[0].append(self.settings_button)
         #Adding a Default Menu in case there is any bugs, need to add error blit to screen
         self.default_menu = Menu(Canvas.get_width() * .19, 0, Canvas.get_width(), Canvas.get_height() -40,'defaultMenu')
         self.default_button = Button(0,0,256,256,self.default_menu, "default_button")
@@ -170,8 +176,11 @@ class Manager:
     
     def _move_list(self, direction:Direction):
         """move up or down on list menu"""
-        dir = 1 if direction == Direction.UP else -1 if direction == Direction.DOWN else 0 
-        self.button_index = (self.button_index + dir) if self.button_index + 1 < self.total_buttons else 0
+        if direction == Direction.UP:
+            self.button_index = (self.button_index -1) if self.button_index > 0  else self.total_buttons -1 
+        if direction == Direction.DOWN:
+            self.button_index = (self.button_index +1) if self.button_index + 1 < self.total_buttons else 0 
+        
         self.menu_mgr._active_button = self.menu_mgr._active_menu.buttons[self.button_index]
         self._deselect_buttons(self.menu_mgr._active_menu)
     
