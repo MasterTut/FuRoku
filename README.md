@@ -1,5 +1,7 @@
 A simple, keyboard-navigable TV app launcher built with Python and Pygame. This project provides a graphical user interface (GUI) for launching applications, with a grid-based menu system, customizable app list, and a form to add new apps.
 Features
+## Screenshot
+![Menu Screenshot](Assets/Images/screenshot.png)
 
     Grid-Based Navigation: Navigate a grid of app buttons using arrow keys (UP, DOWN, LEFT, RIGHT).
     App Launching: Launch applications by selecting a button and pressing ENTER.
