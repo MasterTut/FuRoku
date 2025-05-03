@@ -1,0 +1,56 @@
+{
+    "Apps": [
+        {
+            "name": "AddApp",
+            "image": "./Assets/Images/netflix.jpg",
+            "cmd": "librewolf"
+        },
+        {
+            "name": "funtogo",
+            "image": "./Assets/Images/addApp.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "funtogo2",
+            "image": "./Assets/Images/addApp.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "funtogo3",
+            "image": "./Assets/Images/addApp.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "funtimes",
+            "image": "./Assets/Images/addApp.png",
+            "cmd": "echo fart"
+        },
+        {
+            "name": "AddApp",
+            "image": "./Assets/Images/netflix.jpg",
+            "cmd": "librewolf"
+        },
+        {
+            "name": "funtogo",
+            "image": "./Assets/Images/addApp.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "funtogo2",
+            "image": "./Assets/Images/addApp.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "funtogo3",
+            "image": "./Assets/Images/addApp.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "funtimes",
+            "image": "./Assets/Images/addApp.png",
+            "cmd": "echo fart"
+        }
+    ],
+    "Games": []
+
+}
