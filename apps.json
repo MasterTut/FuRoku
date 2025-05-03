@@ -44,13 +44,11 @@
             "name": "funtogo3",
             "image": "./Assets/Images/addApp.png",
             "cmd": "echo 'fun'"
-        },
-        {
-            "name": "funtimes",
-            "image": "./Assets/Images/addApp.png",
-            "cmd": "echo fart"
         }
+
     ],
-    "Games": []
+    "Games": [],
+    "Other": [],
+    "MoreStuff": []
 
 }
