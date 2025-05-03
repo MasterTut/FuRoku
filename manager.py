@@ -22,27 +22,25 @@ class MenuManager:
         self.buttons_of_menu_names(self.side_menu)
         #adding setting button to Side_menu
         self.settings_button = Button(self.side_menu.width * .2, 1000, 256, 256, self.side_menu, "settings")
-        self.side_menu.buttons.append(self.settings_button)
+        self.side_menu.button_matrix[0].append(self.settings_button)
         self.side_menu.button_matrix[0].append(self.settings_button)
         #Adding a Default Menu in case there is any bugs, need to add error blit to screen
         self.default_menu = Menu(Canvas.get_width() * .19, 0, Canvas.get_width(), Canvas.get_height() -40,'defaultMenu')
         self.default_button = Button(0,0,256,256,self.default_menu, "default_button")
-        #Setting intial button / Menu to select
         self._active_menu = next(iter(self._all_menus), self.default_menu)
-        self._active_button = (self._active_menu.buttons[0] if self._active_menu and self._active_menu.buttons else self.default_button)
+        self._active_button = (self._active_menu.button_matrix[0][0] if self._active_menu and self._active_menu.button_matrix else self.default_button)
+    
 
 
     def buttons_of_menu_names(self,menu:Menu, button_width: int = 150, button_height: int = 40, vertical_spacing: int = 50) -> None:
         """Create buttons from menu_list for list-based menus."""
         if not menu.is_list:
             return
-        menu.buttons.clear()
         self.button_matrix = [[]]
         y_offset = 30
         x_pos = menu.width * 0.2
         for button_text in menu.menu_list:
             button = Button(x_pos, y_offset, button_width, button_height, menu, button_text)
-            menu.buttons.append(button)
             menu.button_matrix[0].append(button)
             y_offset += vertical_spacing
     
@@ -73,7 +71,6 @@ class MenuManager:
             new_button.cmd = app['cmd']
             new_button.is_image = True
             new_menu.button_matrix[row].append(new_button)
-            new_menu.buttons.append(new_button)
 
         self._all_menus.setdefault(self.side_menu, []).append(new_menu)
     
@@ -119,10 +116,9 @@ class Manager:
     
     def listener(self):
         """Listen for keyboard and mouse input and sends to Move function"""
-        self.button_index = self.menu_mgr._active_menu.buttons.index(self.menu_mgr._active_button)
-        self.total_buttons = len(self.menu_mgr._active_menu.button_matrix[0])                         
+        self.button_index, self.row = self.menu_mgr._active_menu._get_active_button_idx_row()
+        self.total_buttons = self.menu_mgr._active_menu._get_total_buttons()
         self.total_rows = len(self.menu_mgr._active_menu.button_matrix)
-        self.row = self.button_index // self.total_buttons
         self.col = self.button_index % self.total_buttons
         self.menu_mgr._active_button.is_active = True
         self.menu_mgr._active_menu.is_active = True
@@ -181,14 +177,15 @@ class Manager:
         if direction == Direction.DOWN:
             self.button_index = (self.button_index +1) if self.button_index + 1 < self.total_buttons else 0 
         
-        self.menu_mgr._active_button = self.menu_mgr._active_menu.buttons[self.button_index]
+        self.menu_mgr._active_button = self.menu_mgr._active_menu.button_matrix[0][self.button_index]
+        print(self.menu_mgr._active_button.name)
         self._deselect_buttons(self.menu_mgr._active_menu)
     
     def _switch_menu(self):
         """Switch from List Menu to nested Menu"""
         if self.menu_mgr._all_menus[self.menu_mgr._active_menu]:
             for menu in self.menu_mgr._all_menus[self.menu_mgr._active_menu]:
-                if menu.buttons and menu.name ==self.menu_mgr._active_button.name:
+                if menu.button_matrix and menu.name ==self.menu_mgr._active_button.name:
                     self.menu_mgr._active_menu = menu
                     self._select_first_item()
 
@@ -217,8 +214,8 @@ class Manager:
     def _select_first_item(self) -> None:
         """Select the first button or input box in the active menu."""
         self.menu_mgr._active_button.is_active = False
-        if self.menu_mgr._active_menu.buttons: 
-            self.menu_mgr._active_button = self.menu_mgr._active_menu.buttons[0]
+        if self.menu_mgr._active_menu.button_matrix: 
+            self.menu_mgr._active_button = self.menu_mgr._active_menu.button_matrix[0][0]
         elif self.menu_mgr._active_menu.input_boxes:
             self.menu_mgr._active_button = self.menu_mgr._active_menu.input_boxes[0]
 

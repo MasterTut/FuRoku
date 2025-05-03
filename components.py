@@ -31,7 +31,6 @@ class Menu:
         self.is_displayed = False
         self.is_list = True
         self.menu_list: List[str]= []
-        self.buttons: List[Button] = []
         self.button_matrix:  List[List[Button]] = [[]]
         self.input_boxes = []
         self._nested_menu_map: dict = {}
@@ -39,21 +38,44 @@ class Menu:
         for input in self.input_boxes:
             input.display()
     def display_buttons(self):
-        for button in self.buttons:
-            button.display()
+        for row in self.button_matrix:
+            for button in row:
+                button.display()
     def display(self):
         self.display_background()
-        if self.buttons:
+        if self.button_matrix:
             self.display_buttons()
         if self.input_boxes:
             self.display_input_boxes()
         Canvas.blit(self.surface, (self.x, self.y))
     def display_background(self):
+        """"Displays a transparnet background if set to true else clears the background to update display"""
         if self.background == True:
             pygame.draw.rect(self.surface, MENU_BG_COLOR, self.surface.get_rect(), border_radius=RADIUS)
         else:
             #clear menu
             pygame.draw.rect(self.surface, (0,0,0,0), self.surface.get_rect())
+    
+    def _get_total_buttons(self):
+        """this is used to determine movement how many rows to create and movement on menu"""
+        total_buttons = 0
+        for row in self.button_matrix:
+            total_buttons += len(row)
+        return total_buttons
+    
+    def _get_active_button_idx_row(self):
+        """get active button idx and row"""
+        idx = 0
+        row = 0
+        for array in self.button_matrix:
+            for button in array:
+                if button.is_active:
+                    row = self.button_matrix.index(array)
+                    idx = array.index(button)
+        return idx, row
+                
+            
+
 
     
 
