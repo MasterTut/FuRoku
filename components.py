@@ -26,7 +26,7 @@ class Menu:
         self.height = height
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.background = True
-        self.rect = self.surface.get_rect()
+        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.is_active = False
         self.is_displayed = False
         self.is_list = True
@@ -38,30 +38,38 @@ class Menu:
         for input in self.input_boxes:
             input.display()
     def display_buttons(self):
-        for row in self.button_matrix:
-            for button in row:
-                button.display()
+        for button in self._get_all_buttons():
+            button.display()
+    
     def display(self):
-        self.display_background()
         if self.button_matrix:
             self.display_buttons()
         if self.input_boxes:
             self.display_input_boxes()
-        Canvas.blit(self.surface, (self.x, self.y))
+        Canvas.blit(self.surface, self.rect)
+        self.display_background()
     def display_background(self):
         """"Displays a transparnet background if set to true else clears the background to update display"""
         if self.background == True:
-            pygame.draw.rect(self.surface, MENU_BG_COLOR, self.surface.get_rect(), border_radius=RADIUS)
+            pygame.draw.rect(self.surface, MENU_BG_COLOR, self.rect, border_radius=RADIUS)
         else:
             #clear menu
-            pygame.draw.rect(self.surface, (0,0,0,0), self.surface.get_rect())
+            pygame.draw.rect(self.surface, (0,0,0,0), self.rect)
     
-    def _get_total_buttons(self):
+    def _get_total_buttons_count(self):
         """this is used to determine movement how many rows to create and movement on menu"""
         total_buttons = 0
         for row in self.button_matrix:
             total_buttons += len(row)
         return total_buttons
+    def _get_all_buttons(self):
+        """Loops through button matrix and appends all to a single list"""
+        all_buttons = []
+        rows = len(self.button_matrix)
+        for row in range(0, rows): 
+            for button in self.button_matrix[row]:
+                all_buttons.append(button)
+        return all_buttons
     
     def _get_active_button_idx_row(self):
         """get active button idx and row"""
@@ -73,10 +81,6 @@ class Menu:
                     row = self.button_matrix.index(array)
                     idx = array.index(button)
         return idx, row
-                
-            
-
-
     
 
 class Button:
@@ -86,10 +90,10 @@ class Button:
         self.y = y
         self.width = width
         self.height = height
+        self.is_active = False
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        self.is_active = False 
         self.menu_surface = menu.surface
+        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         #Set Text Front if button is Text Only
         self.text = Font.render(name, True, (255,200,200))
         self.text_highlighted = Font.render(name, True, (255, 255, 200))
@@ -109,7 +113,6 @@ class Button:
           self.menu_surface.blit(self.text_highlighted, self.rect)
         else:
           self.menu_surface.blit(self.text, self.rect)
-          #print(self.name, self.rect.x)
 
     def display_image(self):
         """display image of button"""
@@ -120,9 +123,14 @@ class Button:
                           self.rect.y - padding, 
                           self.image.get_width() + 2 * padding, 
                           self.image.get_height() + 2 * padding))
+        
         if self.is_active:
             image = pygame.transform.smoothscale(self.image, (300,300))
-            self.menu_surface.blit(image, (self.rect.x -25, self.rect.y -25))
+            self.menu_surface.blit(image, (self.rect.x -22, self.rect.y -25))
+            mouse_pos = pygame.mouse.get_pos()
+            print("Mouse is at:", mouse_pos)
+            print(self.name, self.rect.x, self.rect.y)
+            
         else:
             self.menu_surface.blit(self.image, self.rect)
     def display(self):
