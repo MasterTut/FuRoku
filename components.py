@@ -1,3 +1,4 @@
+from os import wait
 import pygame 
 from typing import List, Optional, Dict
 
@@ -28,7 +29,6 @@ class Menu:
         self.background = True
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.is_active = False
-        self.is_displayed = False
         self.is_list = True
         self.menu_list: List[str]= []
         self.button_matrix:  List[List[Button]] = [[]]
@@ -104,7 +104,8 @@ class Button:
     
     def action(self):
         """define the action the button takes when clicked or enter is pressed"""
-        pass
+        print(self.name)
+        #os.system("librewolf")
 
     def display_text(self):
         """hightlight text when selected"""
@@ -125,11 +126,18 @@ class Button:
                           self.image.get_height() + 2 * padding))
         
         if self.is_active:
-            image = pygame.transform.smoothscale(self.image, (300,300))
-            self.menu_surface.blit(image, (self.rect.x -22, self.rect.y -25))
-            mouse_pos = pygame.mouse.get_pos()
-            print("Mouse is at:", mouse_pos)
-            print(self.name, self.rect.x, self.rect.y)
+            size = self.image.get_size()
+            if size == (48, 48):
+                scaled_image = pygame.transform.scale2x(self.image) 
+            elif size == (256, 256):
+                scaled_image = pygame.transform.smoothscale(self.image, (300,300))
+            else:
+                #This is just to ensure scaled_image is returned may change this later to include other image sizes
+                scaled_image = pygame.transform.smoothscale(self.image, (300,300))
+            self.menu_surface.blit(scaled_image, (self.rect.x -22, self.rect.y -25))
+            #mouse_pos = pygame.mouse.get_pos()
+            #print("Mouse is at:", mouse_pos)
+            #print(self.name, self.rect.x, self.rect.y)
             
         else:
             self.menu_surface.blit(self.image, self.rect)

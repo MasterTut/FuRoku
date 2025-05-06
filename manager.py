@@ -1,6 +1,4 @@
 #!/bin/python3
-from os import wait
-from re import sub
 import sys
 import json
 
@@ -9,24 +7,21 @@ from settings import *
 from components import *
 from enum import Enum
 
-import settings 
 
 
 class MenuManager:
     """Intialize menus and keeps track of active Menus"""
     def __init__(self) -> None:
-        #Defining the root menu (side_menu) 
+        #Defining the base menu (side_menu) 
         self.side_menu = Menu(0, 20, 300, Canvas.get_width() - 40, name="side_menu")
         self.side_menu.is_list = True
         self._all_menus: Dict[Menu, List[Menu]] = {self.side_menu : []} 
         self.side_menu.menu_list = self.read_file()
         self.buttons_of_menu_names(self.side_menu)
-        #adding setting button to Side_menu
-        self.settings_button = Button(self.side_menu.width * .2, 1000, 256, 256, self.side_menu, "settings")
-        self.side_menu.button_matrix[0].append(self.settings_button)
         #Adding a Default Menu in case there is any bugs, need to add error blit to screen
         self.default_menu = Menu(Canvas.get_width() * .19, 0, Canvas.get_width(), Canvas.get_height() -40,'defaultMenu')
         self.default_button = Button(0,0,256,256,self.default_menu, "default_button")
+        #keep track of what is currently selected, in listener the menu and button are activated and de-activated
         self._selected_menu = next(iter(self._all_menus), self.default_menu)
         self._selected_button = (self._selected_menu.button_matrix[0][0] if self._selected_menu and self._selected_menu.button_matrix else self.default_button)
     
@@ -38,18 +33,24 @@ class MenuManager:
             return
         self.button_matrix = [[]]
         y_offset = 30
-        x_pos = menu.width * 0.2
+        x_pos = menu.width * 0.3
         for button_text in menu.menu_list:
-            button = Button(x_pos, y_offset, button_width, button_height, menu, button_text)
+            #Change option for Settings
+            if button_text == "SETTINGS":
+                y_pos = (menu.height * .5)
+                button = Button(x_pos + 35, y_pos, button_width, button_height, menu, button_text)
+                button.image = pygame.image.load(SETTINGS_GEAR)
+                button.is_image = True
+            else:
+                button = Button(x_pos, y_offset, button_width, button_height, menu, button_text)
             menu.button_matrix[0].append(button)
             y_offset += vertical_spacing
     
     def import_apps(self, menu_name, apps_list):
         """Import Menus and Image Buttons from json example: Apps { Name: Netflix, CMD: chromium..."""
-        new_menu = Menu(Canvas.get_width() * .10, 0, Canvas.get_width(), Canvas.get_height(), menu_name)
-        #new_menu = Menu(200, 20, 1920, 1080, menu_name)
+        new_menu = Menu(Canvas.get_width() * .10, 10, Canvas.get_width(), Canvas.get_height(), menu_name)
         new_menu.is_list = False
-        new_menu.background = False
+        new_menu.background = False 
         padding = 31
         button_width = 256
         button_height = 256
@@ -59,15 +60,18 @@ class MenuManager:
         total_buttons = len(apps_list)
         rows = (total_buttons + buttons_per_row - 1) // buttons_per_row  # Ceiling division
 
+        #Need to set starting offset so when apps scale they blit with-in the menu 
         x_start = new_menu.x + 50
+        y_start = new_menu.y
 
-        # Create a 2D matrix
+        # Create a 2D matrix for buttons
         new_menu.button_matrix = [[] for _ in range(rows)]
+        #IMPORT BUTTONS TO MENU
         for i, app in enumerate(apps_list):
             row = i // buttons_per_row
             col = i % buttons_per_row
             x = x_start + col * (button_width + padding)
-            y = padding + row * (button_height + padding)
+            y = y_start + padding + row * (button_height + padding)
             new_button = Button(x, y, button_width, button_height,new_menu, app['name'])
             new_button.image = pygame.image.load(app['image'])
             new_button.image = pygame.transform.scale(new_button.image, (button_width, button_height))
@@ -136,7 +140,9 @@ class Manager:
             self.button_index, self.row = self.menu_mgr._selected_menu._get_active_button_idx_row()
             self.total_rows = len(self.menu_mgr._selected_menu.button_matrix)
             self.col = self.button_index % self.total_buttons
-        self.menu_mgr._selected_button.is_active = True
+        if self.menu_mgr._selected_button.is_active == False:
+                self.sound.play()
+                self.menu_mgr._selected_button.is_active = True
         self.menu_mgr._selected_menu.is_active = True
         for event in pygame.event.get():
 
@@ -146,7 +152,8 @@ class Manager:
                     self._track_mouse_movement()
               if event.type == pygame.MOUSEBUTTONDOWN:
                   #track mouse clicks 
-                  mouse_pos = pygame.mouse.get_pos()
+                  self.menu_mgr._selected_button.action()
+                  
               #TRACK IF INPUT FIELD IS SELECTED 
               elif event.type == pygame.TEXTINPUT:
                   pass
@@ -159,8 +166,6 @@ class Manager:
     
     def move(self, key) -> None:
         """Menus and button naviagtion"""
-
-        self.sound.play()
         if key == pygame.K_RIGHT:
             if self.menu_mgr._selected_menu.is_list:
                 self._switch_menu()
@@ -261,7 +266,6 @@ class Manager:
             self.menu_mgr._selected_button = self.menu_mgr._selected_menu.button_matrix[self.row][self.col]
         else:
             self.menu_mgr._selected_button = self.menu_mgr._selected_menu.button_matrix[self.row][-1]
-        self.menu_mgr._selected_button.is_active = True
         self._deselect_buttons(self.menu_mgr._selected_menu)
 
     
@@ -273,11 +277,13 @@ class Manager:
         all_buttons = self.menu_mgr._selected_menu._get_all_buttons()
         for menu in self.menu_mgr._get_all_menus():
             if menu.rect.collidepoint(mouse_pos) and menu.is_active:
-                self.menu_mgr._selected_menu = menu
+                check_buttons_exists = menu._get_total_buttons_count()
+                if check_buttons_exists > 0:
+                    self.menu_mgr._selected_menu = menu
         for button in all_buttons:
             if button.rect.collidepoint(surface_mouse_pos):
-                self.menu_mgr._selected_button = button                     
-                self._deselect_buttons(self.menu_mgr._selected_menu)        
+                self.menu_mgr._selected_button = button
+                self._deselect_buttons(self.menu_mgr._selected_menu)
 
         
                         

@@ -1,5 +1,5 @@
 {
-    "Apps": [
+    "APPS": [
         {
             "name": "AddApp",
             "image": "./Assets/Images/netflix.jpg",
@@ -47,8 +47,7 @@
         }
 
     ],
-    "Games": [],
-    "Other": [],
-    "MoreStuff": []
+    "GAMES": [],
+    "SETTINGS": []
 
 }
