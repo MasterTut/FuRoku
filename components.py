@@ -1,5 +1,5 @@
 import pygame 
-from typing import List, Optional, Dict
+from typing import List 
 
 #Custom Import 
 from settings import *
@@ -31,8 +31,9 @@ class Menu:
         self.is_list = True
         self.sub_menus: List[Menu] = []
         self.button_matrix:  List[List[Button]] = [[]]
+        self.input_boxs_fields = []
         self.input_boxes = []
-        self._nested_menu_map: dict = {}
+
     def display_input_boxes(self):
         for input in self.input_boxes:
             input.display()
@@ -80,6 +81,20 @@ class Menu:
                     row = self.button_matrix.index(array)
                     idx = array.index(button)
         return idx, row
+
+    def _set_text_fields(self, text_width: int = 600, text_height: int = 40, start_x = 500, start_y =100) -> None:
+        """Adds text fields vertiaclly(default) to menu"""
+        spacing = 50 
+        for idx, field in enumerate(self.input_boxs_fields):
+            new_text_input = TextInput(start_x, start_y + idx * spacing,text_width, text_height, self, field)
+            self.input_boxes.append(new_text_input)
+
+    def _set_buttons(self,button_names:List, x_pos: float = 0, y_pos=0,button_width: int = 150, button_height: int = 40, horizontal_spacing: int = 150) -> None:
+        """Adds buttons horizontially(default) to menu"""
+        for button_name in button_names:
+            new_button = Button(x_pos,y_pos,button_width,button_height, self, button_name)
+            self.button_matrix[0].append(new_button)
+            x_pos += horizontal_spacing
     
 
 class Button:
@@ -94,8 +109,7 @@ class Button:
         self.menu_surface = menu.surface
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         #Set Text Front if button is Text Only
-        self.text = Font.render(name, True, (255,200,200))
-        self.text_highlighted = Font.render(name, True, (255, 255, 200))
+        self.text = Text(self.x, self.y, self.width,self.height, menu, self.name)
         #Set Image if button is image
         self.is_image = False
         self.image = pygame.image.load(TEST_BUTTON_IMAGE)
@@ -105,14 +119,6 @@ class Button:
         """define the action the button takes when clicked or enter is pressed"""
         print(self.name)
         #os.system("librewolf")
-
-    def display_text(self):
-        """hightlight text when selected"""
-        self.menu_surface.blit(self.surface, self.rect)
-        if self.is_active:
-          self.menu_surface.blit(self.text_highlighted, self.rect)
-        else:
-          self.menu_surface.blit(self.text, self.rect)
 
     def display_image(self):
         """display image of button"""
@@ -143,10 +149,27 @@ class Button:
     def display(self):
         if self.is_image:
             self.display_image()
+        elif self.is_active:
+            #True passes weather the text is highlighted
+            self.text.display(True)
         else:
-            self.display_text()
+            self.text.display(False)
 
-
+class Text:
+    def __init__(self, x, y, width, height, menu:Menu, name="Default") -> None:
+        self.menu = menu
+        self.surface = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.rect = pygame.Rect(x, y, width, height)
+        self.text = Font.render(name, True, (255,200,200))
+        self.text_highlighted = Font.render(name, True, (255, 255, 200))
+    
+    def display(self, hightlighted:bool):
+        """hightlight text when selected"""
+        self.menu.surface.blit(self.surface, self.rect)
+        if hightlighted:
+          self.menu.surface.blit(self.text_highlighted, self.rect)
+        else:
+          self.menu.surface.blit(self.text, self.rect)
 
 class TextInput:
     def __init__(self, x, y, width, height, menu:Menu, name="Default") -> None:
@@ -186,20 +209,20 @@ class TextInput:
 
 
 
-class ErrorWindow:
-    def __init__(self,x, y, message="unknown"):
+class MessageWindow:
+    def __init__(self,x, y, menu:Menu, message="unknown"):
         self.x = x
         self.y = y
         self.width = Canvas.get_width() / 2
         self.height = Canvas.get_height() / 2
         self.surface = pygame.Surface((self.width,self.height), pygame.SRCALPHA)
         self.rect = self.surface.get_rect()
-        self.button = Button(self.width -50, self.height -50, 20, 20, self.surface, name="OK")  
+        self.button = Button(self.width -50, self.height -50, 20, 20, menu, name="OK")  
         self.message = message
         self.error = False 
         self.button.action = self.ok_button_func
     def display(self):
-        """Display the error window, with error""" 
+        """Display the message window""" 
         self.message = str(self.message) if self.message is not None else "Unknown error"
         self.surface.fill((0,0,0,100))
         text_y = 10
@@ -209,6 +232,7 @@ class ErrorWindow:
             text_y += 30
         self.button.display()
         Canvas.blit(self.surface, (self.x, self.y))
+    
     def wrap_text(self, message):
         """Wrap text to fit within max_width on a surface."""
         words = message.split(' ')

@@ -1,14 +1,12 @@
 #!/bin/python3
 import sys
 import json
-
+from enum import Enum
+from typing import Dict
 #custom imports 
 from menus import AddRemoveEditAPP
 from settings import *
 from components import *
-from enum import Enum
-
-
 
 class MenuManager:
     """Intialize menus and keeps track of active Menus"""
@@ -17,16 +15,16 @@ class MenuManager:
         self.side_menu = Menu(0, 20, 300, Canvas.get_width() - 40, name="side_menu")
         self.side_menu.is_list = True
         self._all_menus: Dict[str, Menu] = {self.side_menu.name : self.side_menu} 
-        self.buttons_of_menu_names(self.side_menu)
+        self.add_list_of_menu_names_to_side_menu()
+        self._import_apps_to_settings_menu()
         #keep track of what is currently selected, in listener the menu and button are activated and de-activated
         self._selected_menu = self.side_menu
         self._selected_button = self.side_menu.button_matrix[0][0]
-        self._import_apps_to_settings_menu()
+        
 
-    def buttons_of_menu_names(self,menu:Menu, button_width: int = 150, button_height: int = 40, vertical_spacing: int = 50) -> None:
+    def add_list_of_menu_names_to_side_menu(self, button_width: int = 150, button_height: int = 40, vertical_spacing: int = 50) -> None:
         """Create buttons from list of button names for list-based menus."""
-        if not menu.is_list:
-            return
+        menu = self.side_menu
         y_offset = 30
         x_pos = menu.width * 0.3
         for button_text in self.read_file():
@@ -46,9 +44,6 @@ class MenuManager:
         new_menu = Menu(Canvas.get_width() * .10, 10, Canvas.get_width(), Canvas.get_height(), menu_name)
         new_menu.is_list = False
         new_menu.background = False 
-        #padding = 31
-        #button_width = 256
-        #button_height = 256
         max_width = new_menu.width - (padding + button_width)
         buttons_per_row = max_width // (button_width + padding)
         # Calculate grid dimensions
@@ -102,7 +97,8 @@ class MenuManager:
             if menu.is_active:
                 menu.display()
             if menu in self.side_menu.sub_menus and self._selected_button.name == menu.name or menu.name == "side_menu":
-                menu.is_active = True
+                if self._selected_button in self.side_menu.button_matrix[0]:
+                    menu.is_active = True
             elif menu == self._selected_menu:
                 menu.is_active = True
             else:
@@ -127,7 +123,7 @@ class MenuManager:
             
     def _import_apps_to_settings_menu(self):
         """"Import menus to display for buttons on settings menu"""
-        add_remove_edit_menu = AddRemoveEditAPP(Canvas.get_width() *.1, 0, Canvas.get_width(), Canvas.get_height() -40,'add_remove_edit').menu
+        add_remove_edit_menu = AddRemoveEditAPP().menu
         settings_menu = self.side_menu.sub_menus[-1]
         settings_menu.sub_menus.append(add_remove_edit_menu)
         for submenu in settings_menu.sub_menus:
