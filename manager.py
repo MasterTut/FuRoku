@@ -3,6 +3,7 @@ import sys
 import json
 
 #custom imports 
+from menus import AddRemoveEditAPP
 from settings import *
 from components import *
 from enum import Enum
@@ -15,26 +16,20 @@ class MenuManager:
         #Defining the base menu (side_menu) 
         self.side_menu = Menu(0, 20, 300, Canvas.get_width() - 40, name="side_menu")
         self.side_menu.is_list = True
-        self._all_menus: Dict[Menu, List[Menu]] = {self.side_menu : []} 
-        self.side_menu.menu_list = self.read_file()
+        self._all_menus: Dict[str, Menu] = {self.side_menu.name : self.side_menu} 
         self.buttons_of_menu_names(self.side_menu)
-        #Adding a Default Menu in case there is any bugs, need to add error blit to screen
-        self.default_menu = Menu(Canvas.get_width() * .19, 0, Canvas.get_width(), Canvas.get_height() -40,'defaultMenu')
-        self.default_button = Button(0,0,256,256,self.default_menu, "default_button")
         #keep track of what is currently selected, in listener the menu and button are activated and de-activated
-        self._selected_menu = next(iter(self._all_menus), self.default_menu)
-        self._selected_button = (self._selected_menu.button_matrix[0][0] if self._selected_menu and self._selected_menu.button_matrix else self.default_button)
-    
-
+        self._selected_menu = self.side_menu
+        self._selected_button = self.side_menu.button_matrix[0][0]
+        self._import_apps_to_settings_menu()
 
     def buttons_of_menu_names(self,menu:Menu, button_width: int = 150, button_height: int = 40, vertical_spacing: int = 50) -> None:
-        """Create buttons from menu_list for list-based menus."""
+        """Create buttons from list of button names for list-based menus."""
         if not menu.is_list:
             return
-        self.button_matrix = [[]]
         y_offset = 30
         x_pos = menu.width * 0.3
-        for button_text in menu.menu_list:
+        for button_text in self.read_file():
             #Change option for Settings
             if button_text == "SETTINGS":
                 y_pos = (menu.height * .5)
@@ -78,8 +73,7 @@ class MenuManager:
             new_button.cmd = app['cmd']
             new_button.is_image = True
             new_menu.button_matrix[row].append(new_button)
-
-        self._all_menus.setdefault(self.side_menu, []).append(new_menu)
+        self.side_menu.sub_menus.append(new_menu)
     
     def read_file(self):
         """reads apps.json and send to import apps"""
@@ -101,24 +95,60 @@ class MenuManager:
             self.import_apps(menu_name, apps) 
         return custom_menu_names
 
+    def _display_menus_old(self):
+        self.side_menu.display()
+        for sub_menu in self.side_menu.sub_menus:
+            if sub_menu.is_active:
+                sub_menu.display()
+            if self._selected_button.name == sub_menu.name:
+                sub_menu.is_active = True
+            else:
+                sub_menu.is_active = False
+        
     def _display_menus(self):
-        for menu in self._all_menus:
+        #self.side_menu.display()
+        for menu in self._get_all_menus():
             if menu.is_active:
                 menu.display()
-        for submenu in self._all_menus[self.side_menu]:
-            if self._selected_button.name == submenu.name or submenu == self._selected_menu:
-                submenu.is_active = True
-                submenu.display()
+            if menu in self.side_menu.sub_menus and self._selected_button.name == menu.name or menu.name == "side_menu":
+                menu.is_active = True
+            elif menu == self._selected_menu:
+                menu.is_active = True
             else:
-                submenu.is_active = False
-    def _get_all_menus(self):
-        """returns a list of all menus"""
-        list_menu = []
-        for menu in self._all_menus:
-            list_menu.append(menu)
-            for submenu in self._all_menus[menu]:
-                list_menu.append(submenu)
-        return list_menu
+                menu.is_active = False
+
+    def _get_all_menus(self) -> List[Menu]:
+        """Returns a list of all menus, including all nested submenus."""
+        menu_list: List[Menu] = []
+
+        def collect_menus(menu: Menu) -> None:
+            """Recursively collect all menus and their submenus."""
+            menu_list.append(menu)  # Add the current menu
+            for submenu in menu.sub_menus:  # Recurse into submenus
+                collect_menus(submenu)
+
+        # Iterate over top-level menus
+        for menu in self._all_menus.values():
+            collect_menus(menu)
+
+        return menu_list
+
+            
+    def _import_apps_to_settings_menu(self):
+        """"Import menus to display for buttons on settings menu"""
+        add_remove_edit_menu = AddRemoveEditAPP(Canvas.get_width() *.1, 0, Canvas.get_width(), Canvas.get_height() -40,'add_remove_edit').menu
+        #self.side_menu.sub_menus[-1].sub_menus.append(add_remove_edit_menu)
+        settings_menu = self.side_menu.sub_menus[-1]
+        settings_menu.sub_menus.append(add_remove_edit_menu)
+        for submenu in settings_menu.sub_menus:
+            def _activate_menu():
+                self._selected_menu = submenu
+            for button in settings_menu._get_all_buttons():
+                if button.name ==  submenu.name:
+                    button.action = _activate_menu 
+
+        
+
 
    
 class Direction(Enum):
@@ -191,6 +221,7 @@ class Manager:
                 self._move_in_grid(Direction.UP)
             print("UP")
         if key == pygame.K_RETURN:
+            self.menu_mgr._selected_button.action()
             print("ENTER")
     
     def _move_list(self, direction:Direction):
@@ -205,8 +236,8 @@ class Manager:
     
     def _switch_menu(self):
         """Switch from List Menu to nested Menu"""
-        if self.menu_mgr._all_menus[self.menu_mgr._selected_menu]:
-            for menu in self.menu_mgr._all_menus[self.menu_mgr._selected_menu]:
+        if self.menu_mgr._all_menus[self.menu_mgr._selected_menu.name]:
+            for menu in self.menu_mgr._all_menus[self.menu_mgr._selected_menu.name].sub_menus:
                 if menu.button_matrix and menu.name ==self.menu_mgr._selected_button.name:
                     self.menu_mgr._selected_menu = menu
                     self._select_first_item()
@@ -220,10 +251,11 @@ class Manager:
     
     def _deselect_menus(self):
         """Deselect all menus that are not currenlty selected"""
-        for menu in self.menu_mgr._all_menus:
+        for menu_name in self.menu_mgr._all_menus:
+            menu = self.menu_mgr._all_menus[menu_name]
             if menu != self.menu_mgr._selected_menu:
                 menu.is_active = False
-            for submenu in self.menu_mgr._all_menus[menu]:
+            for submenu in menu.sub_menus:
                 if submenu != self.menu_mgr._selected_menu:
                     submenu.is_active = False
     
@@ -272,7 +304,7 @@ class Manager:
     def _track_mouse_movement(self):
         mouse_pos = pygame.mouse.get_pos()
         selected_menu = self.menu_mgr._selected_menu
-        #Need to offset the mouse position as mouse postion tracks Canvas pos not and butons are draw in corliation with the Surface
+        #Need to offset the mouse position as mouse postion tracks Canvas pos and buton.rect are in corliation with the Surface
         surface_mouse_pos = (mouse_pos[0] - selected_menu.x, mouse_pos[1] - selected_menu.y)
         all_buttons = self.menu_mgr._selected_menu._get_all_buttons()
         for menu in self.menu_mgr._get_all_menus():

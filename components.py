@@ -1,4 +1,3 @@
-from os import wait
 import pygame 
 from typing import List, Optional, Dict
 
@@ -30,7 +29,7 @@ class Menu:
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.is_active = False
         self.is_list = True
-        self.menu_list: List[str]= []
+        self.sub_menus: List[Menu] = []
         self.button_matrix:  List[List[Button]] = [[]]
         self.input_boxes = []
         self._nested_menu_map: dict = {}

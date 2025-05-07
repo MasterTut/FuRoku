@@ -44,9 +44,11 @@ FONT_SIZE = 30
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 """Defines the location of Asset files"""
 FONT_PATH = os.path.join(BASE_DIR, "Assets", "Fonts", "GoMonoNerdFont-Bold.ttf")
-BACKGROUND_IMAGE = os.path.join(BASE_DIR, "Assets", "Images", "background2.jpg")
-TEST_BUTTON_IMAGE = os.path.join(BASE_DIR, "Assets", "Images", "testing.png")
+APPS_PATH = os.path.join(BASE_DIR, "apps.json")
+BACKGROUND_IMAGE = os.path.join(BASE_DIR, "Assets", "Images", "UI", "background.jpg")
+SETTINGS_GEAR = os.path.join(BASE_DIR, "Assets", "Images", "UI", "settings.svg")
+TEST_BUTTON_IMAGE = os.path.join(BASE_DIR, "Assets", "Images", "Apps", "testing.png")
 MUSIC = os.path.join(BASE_DIR, "Assets", "Sound", "Music","space-trip.mp3")
 CLICK_SOUND = os.path.join(BASE_DIR, "Assets", "Sound", "click.mp3")
-APPS_PATH = os.path.join(BASE_DIR, "apps.json")
-SETTINGS_GEAR = os.path.join(BASE_DIR, "Assets", "Images", "UI", "settings.svg")
+
+
