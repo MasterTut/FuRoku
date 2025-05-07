@@ -41,14 +41,14 @@ class MenuManager:
             menu.button_matrix[0].append(button)
             y_offset += vertical_spacing
     
-    def import_apps(self, menu_name, apps_list):
+    def import_apps(self, menu_name, apps_list, button_width: int = 256, button_height: int = 256, padding: int = 31) -> None:
         """Import Menus and Image Buttons from json example: Apps { Name: Netflix, CMD: chromium..."""
         new_menu = Menu(Canvas.get_width() * .10, 10, Canvas.get_width(), Canvas.get_height(), menu_name)
         new_menu.is_list = False
         new_menu.background = False 
-        padding = 31
-        button_width = 256
-        button_height = 256
+        #padding = 31
+        #button_width = 256
+        #button_height = 256
         max_width = new_menu.width - (padding + button_width)
         buttons_per_row = max_width // (button_width + padding)
         # Calculate grid dimensions
@@ -95,15 +95,6 @@ class MenuManager:
             self.import_apps(menu_name, apps) 
         return custom_menu_names
 
-    def _display_menus_old(self):
-        self.side_menu.display()
-        for sub_menu in self.side_menu.sub_menus:
-            if sub_menu.is_active:
-                sub_menu.display()
-            if self._selected_button.name == sub_menu.name:
-                sub_menu.is_active = True
-            else:
-                sub_menu.is_active = False
         
     def _display_menus(self):
         #self.side_menu.display()
@@ -137,7 +128,6 @@ class MenuManager:
     def _import_apps_to_settings_menu(self):
         """"Import menus to display for buttons on settings menu"""
         add_remove_edit_menu = AddRemoveEditAPP(Canvas.get_width() *.1, 0, Canvas.get_width(), Canvas.get_height() -40,'add_remove_edit').menu
-        #self.side_menu.sub_menus[-1].sub_menus.append(add_remove_edit_menu)
         settings_menu = self.side_menu.sub_menus[-1]
         settings_menu.sub_menus.append(add_remove_edit_menu)
         for submenu in settings_menu.sub_menus:
@@ -146,10 +136,6 @@ class MenuManager:
             for button in settings_menu._get_all_buttons():
                 if button.name ==  submenu.name:
                     button.action = _activate_menu 
-
-        
-
-
    
 class Direction(Enum):
     UP = "UP"
