@@ -38,7 +38,7 @@ BUTTON_COLOR = BLUE_ISH
 BUTTON_BG_COLOR = DARK_BLUE_TRANS
 
 #Font Settings 
-FONT_SIZE = 30
+FONT_SIZE = 40
 
 # ASSETS
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

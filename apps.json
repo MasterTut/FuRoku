@@ -44,8 +44,18 @@
             "name": "funtogo3",
             "image": "./Assets/Images/Apps/addApp.png",
             "cmd": "echo 'fun'"
-        }
+        },
 
+        {
+            "name": "AddApp",
+            "image": "./Assets/Images/Apps/netflix.jpg",
+            "cmd": "librewolf"
+        },
+        {
+            "name": "funtogo",
+            "image": "./Assets/Images/Apps/addApp.png",
+            "cmd": "echo 'fun'"
+        }
     ],
     "GAMES": [],
     "SETTINGS": [
