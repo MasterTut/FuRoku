@@ -1,54 +1,84 @@
 {
-    "Apps": [
+    "APPS": [
         {
             "name": "AddApp",
-            "image": "./Assets/Images/netflix.jpg",
+            "image": "./Assets/Images/Apps/netflix.jpg",
             "cmd": "librewolf"
         },
         {
             "name": "funtogo",
-            "image": "./Assets/Images/addApp.png",
+            "image": "./Assets/Images/Apps/addApp.png",
             "cmd": "echo 'fun'"
         },
         {
             "name": "funtogo2",
-            "image": "./Assets/Images/addApp.png",
+            "image": "./Assets/Images/Apps/addApp.png",
             "cmd": "echo 'fun'"
         },
         {
             "name": "funtogo3",
-            "image": "./Assets/Images/addApp.png",
+            "image": "./Assets/Images/Apps/addApp.png",
             "cmd": "echo 'fun'"
         },
         {
             "name": "funtimes",
-            "image": "./Assets/Images/addApp.png",
+            "image": "./Assets/Images/Apps/addApp.png",
             "cmd": "echo fart"
         },
         {
             "name": "AddApp",
-            "image": "./Assets/Images/netflix.jpg",
+            "image": "./Assets/Images/Apps/netflix.jpg",
             "cmd": "librewolf"
         },
         {
             "name": "funtogo",
-            "image": "./Assets/Images/addApp.png",
+            "image": "./Assets/Images/Apps/addApp.png",
             "cmd": "echo 'fun'"
         },
         {
             "name": "funtogo2",
-            "image": "./Assets/Images/addApp.png",
+            "image": "./Assets/Images/Apps/addApp.png",
             "cmd": "echo 'fun'"
         },
         {
             "name": "funtogo3",
-            "image": "./Assets/Images/addApp.png",
+            "image": "./Assets/Images/Apps/addApp.png",
+            "cmd": "echo 'fun'"
+        },
+
+        {
+            "name": "AddApp",
+            "image": "./Assets/Images/Apps/netflix.jpg",
+            "cmd": "librewolf"
+        },
+        {
+            "name": "funtogo",
+            "image": "./Assets/Images/Apps/addApp.png",
             "cmd": "echo 'fun'"
         }
-
     ],
-    "Games": [],
-    "Other": [],
-    "MoreStuff": []
+    "GAMES": [],
+    "SETTINGS": [
+        {
+            "name": "add_remove_edit",
+            "image": "./Assets/Images/UI/add_remove_edit.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "networking",
+            "image": "./Assets/Images/UI/networking.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "display",
+            "image": "./Assets/Images/UI/display.png",
+            "cmd": "echo 'fun'"
+        },
+        {
+            "name": "general",
+            "image": "./Assets/Images/UI/general.png",
+            "cmd": "echo 'fun'"
+        }
+    ]
 
 }

@@ -1,5 +1,5 @@
 import pygame 
-from typing import List, Optional, Dict
+from typing import List, Dict 
 
 #Custom Import 
 from settings import *
@@ -26,51 +26,121 @@ class Menu:
         self.height = height
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.background = True
-        self.rect = self.surface.get_rect()
+        #Creates multiple transparents rects on menu
+        self.backgrounds: list[pygame.Rect] = []
+        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.is_active = False
-        self.is_displayed = False
+        self.is_locked = False
         self.is_list = True
-        self.menu_list: List[str]= []
-        self.buttons: List[Button] = []
+        self.sub_menus: List[Menu] = []
         self.button_matrix:  List[List[Button]] = [[]]
-        self.input_boxes = []
-        self._nested_menu_map: dict = {}
+        self.input_boxs_fields = []
+        self.input_boxes: list[TextInput] = []
+        self.text_window: TextWindow = TextWindow(self.x, self.y, self.width, self.height, self, messsage='NotSet', name='Default')#Creates a text window on menu if one exists 
+        self.row_select = False #weather buttons are selected per menu or per row
+        
+
+    def display_text_window(self):
+        self.text_window.display()
     def display_input_boxes(self):
         for input in self.input_boxes:
             input.display()
     def display_buttons(self):
-        for button in self.buttons:
+        for button in self._get_all_buttons():
             button.display()
+     
     def display(self):
-        self.display_background()
-        if self.buttons:
+        if not self.is_active:
+            return
+        if self.text_window.name != 'Default':
+            self.text_window.display()
+        if self.button_matrix:
             self.display_buttons()
         if self.input_boxes:
             self.display_input_boxes()
-        Canvas.blit(self.surface, (self.x, self.y))
+        if len(self.backgrounds) > 0:
+            self.display_background()
+        if self.is_active:
+            Canvas.blit(self.surface, self.rect)
+        pygame.draw.rect(self.surface, (0,0,0,0), self.rect)
     def display_background(self):
-        if self.background == True:
-            pygame.draw.rect(self.surface, MENU_BG_COLOR, self.surface.get_rect(), border_radius=RADIUS)
-        else:
-            #clear menu
-            pygame.draw.rect(self.surface, (0,0,0,0), self.surface.get_rect())
-
+        """"Displays a transparnet background if set to true else clears the background to update display"""
+        for background in self.backgrounds: 
+                    pygame.draw.rect(self.surface,(255,255,255, 10), background)
     
+    def _get_total_buttons_count(self):
+        """this is used to determine movement how many rows to create and movement on menu"""
+        total_buttons = 0
+        for row in self.button_matrix:
+            total_buttons += len(row)
+        return total_buttons
+    def _get_all_buttons(self):
+        """Loops through button matrix and appends all to a single list"""
+        all_buttons = []
+        rows = len(self.button_matrix)
+        for row in range(0, rows): 
+            for button in self.button_matrix[row]:
+                all_buttons.append(button)
+        return all_buttons
+    
+    def _get_active_button_idx_row(self):
+        """get active button idx and row"""
+        idx = 0
+        row = 0
+        for array in self.button_matrix:
+            for button in array:
+                if button.is_active:
+                    row = self.button_matrix.index(array)
+                    idx = array.index(button)
+        return idx, row
+
+    def _set_input_text_fields(self, text_width: int = 600, text_height: int = 40, start_x = 500, start_y =100) -> None:
+        """Adds text fields vertiaclly(default) to menu"""
+        spacing = 50 
+        for idx, field in enumerate(self.input_boxs_fields):
+            new_text_input = TextInput(start_x, start_y + idx * spacing,text_width, text_height, self, field)
+            self.input_boxes.append(new_text_input)
+
+    def _set_buttons(self,buttons:Dict, x_pos: float = 0, y_pos=0,button_width: int = 150, button_height: int = 40, horizontal_spacing: int = 150, font: pygame.font.Font = Font) -> None:
+        """Adds buttons horizontially(default) to menu"""
+        set_buttons = []
+        for button_name in buttons.keys():
+            new_button = Button(x_pos,y_pos,button_width,button_height, self,font, button_name)
+            if buttons[button_name]["action"]:
+                new_button.action = buttons[button_name]["action"]
+            set_buttons.append(new_button)
+            x_pos += horizontal_spacing
+
+        new_row: List[Button] = set_buttons
+        if len(self.button_matrix[0]) == 0:
+             self.button_matrix[0] = new_row
+        else:
+            self.button_matrix.append(new_row)
+    
+    def _print_button_matrix(self):
+        """adding a diagnostic method to look at the matrix"""
+        #del when done
+        for idx, row in enumerate(self.button_matrix):
+            for button in row:
+                print("row is: {idx} name: {button}".format(idx=idx, button=button.name))
 
 class Button:
-    def __init__(self, x, y, width, height, menu:Menu, name='unnamed'):
+    def __init__(self, x, y, width, height, menu:Menu,font:pygame.font.Font=Font, name='unnamed'):
         self.name = name
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+        self.font =font
+        self.is_active = False
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        self.is_active = False 
         self.menu_surface = menu.surface
+        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         #Set Text Front if button is Text Only
-        self.text = Font.render(name, True, (255,200,200))
-        self.text_highlighted = Font.render(name, True, (255, 255, 200))
+        self.text = Text(self.x, self.y,menu, self.font, self.name)
+        self.background = True
+        self.select_rectangle = False
+       
         #Set Image if button is image
         self.is_image = False
         self.image = pygame.image.load(TEST_BUTTON_IMAGE)
@@ -78,41 +148,87 @@ class Button:
     
     def action(self):
         """define the action the button takes when clicked or enter is pressed"""
-        pass
-
-    def display_text(self):
-        """hightlight text when selected"""
-        self.menu_surface.blit(self.surface, self.rect)
-        if self.is_active:
-          self.menu_surface.blit(self.text_highlighted, self.rect)
-        else:
-          self.menu_surface.blit(self.text, self.rect)
-          #print(self.name, self.rect.x)
+        print(self.name)
+        #os.system("librewolf")
 
     def display_image(self):
         """display image of button"""
         padding = 5
         #draw background for Apps 
-        pygame.draw.rect(self.menu_surface, (BUTTON_BG_COLOR), 
-                         (self.rect.x - padding, 
-                          self.rect.y - padding, 
-                          self.image.get_width() + 2 * padding, 
-                          self.image.get_height() + 2 * padding))
+        if self.background: 
+            pygame.draw.rect(self.menu_surface, (BUTTON_BG_COLOR), 
+                             (self.rect.x - padding, 
+                              self.rect.y - padding, 
+                              self.image.get_width() + 2 * padding, 
+                              self.image.get_height() + 2 * padding))
+        
         if self.is_active:
-            image = pygame.transform.smoothscale(self.image, (300,300))
-            self.menu_surface.blit(image, (self.rect.x -25, self.rect.y -25))
+            size = self.image.get_size()
+            if size == (48, 48):
+                scaled_image = pygame.transform.scale2x(self.image) 
+            elif size == (256, 256):
+                scaled_image = pygame.transform.smoothscale(self.image, (300,300))
+            else:
+                #This is just to ensure scaled_image is returned may change this later to include other image sizes
+                scaled_image = pygame.transform.smoothscale(self.image, (300,300))
+            self.menu_surface.blit(scaled_image, (self.rect.x -22, self.rect.y -25))
+            #mouse_pos = pygame.mouse.get_pos()
+            #print("Mouse is at:", mouse_pos)
+            #print(self.name, self.rect.x, self.rect.y)
+            
         else:
             self.menu_surface.blit(self.image, self.rect)
     def display(self):
         if self.is_image:
             self.display_image()
         else:
+            if self.background:
+                self.text.display_background()
+            self.text.display()
+        if self.is_active:
+            self.text.highlighted = True
+        else:
+            self.text.highlighted = False
+
+class Text:
+    """creates text for buttons"""
+    def __init__(self, x, y,  menu:Menu, font:pygame.font.Font=Font, text="Default",background_x_offset=40, background_y_offset=20,) -> None:
+        self.menu = menu
+        self.x = x
+        self.y = y
+        self.font =font
+        self.text = self.font.render(text, True, BLACK)
+        self.text_highlighted = font.render(text, True, (255, 255, 255))
+        self.width, self.height = font.size(text)
+        self.text_surface  = pygame.Surface((self.width, self.height), pygame.SRCALPHA) 
+        self.rect = pygame.Rect(x, y, self.width, self.height)
+        #ADD BACKGROUND
+        self.background_rect = pygame.Rect(x-10, y-10, self.width + background_x_offset, self.height + background_y_offset)
+        self.highlighted = False
+        self.background = False
+
+    def display_background(self):
+        """"Displays background"""
+        pygame.draw.rect(self.menu.surface, (255,255,255,90),(self.x - 30,self.y -10,self.width *2,self.height * 2), border_radius=RADIUS)
+    def display_text(self):
+        """hightlight text when selected"""
+        self.menu.surface.blit(self.text, self.rect)
+    
+    def display_highlighted(self):
+        self.menu.surface.blit(self.text_highlighted, self.rect)
+    
+    def display(self):
+        if self.background:
+            self.display_background()        
+        if self.highlighted:
+            self.display_highlighted()
+        else:
             self.display_text()
 
 
-
 class TextInput:
-    def __init__(self, x, y, width, height, menu:Menu, name="Default") -> None:
+    """creates a field for user to input text"""
+    def __init__(self, x, y, width, height, menu:Menu, name="TextInput") -> None:
         self.name = name
         self.x = x 
         self.y = y
@@ -147,31 +263,19 @@ class TextInput:
         self.menu.surface.blit(self.name_surface, (self.nameX, self.nameY))
         self.menu.surface.blit(self.text_surface, (self.textX, self.textY))
 
-
-
-class ErrorWindow:
-    def __init__(self,x, y, message="unknown"):
-        self.x = x
+class TextWindow:
+    """creates in window on the surface that displays a message """
+    def __init__(self, x, y, width, height, menu:Menu, messsage, name="TextWindow") -> None:
+        self.name = name
+        self.x = x 
         self.y = y
-        self.width = Canvas.get_width() / 2
-        self.height = Canvas.get_height() / 2
-        self.surface = pygame.Surface((self.width,self.height), pygame.SRCALPHA)
-        self.rect = self.surface.get_rect()
-        self.button = Button(self.width -50, self.height -50, 20, 20, self.surface, name="OK")  
-        self.message = message
-        self.error = False 
-        self.button.action = self.ok_button_func
-    def display(self):
-        """Display the error window, with error""" 
-        self.message = str(self.message) if self.message is not None else "Unknown error"
-        self.surface.fill((0,0,0,100))
-        text_y = 10
-        for line in self.wrap_text(self.message):
-            text_surface = Font.render(line, True, RED)
-            self.surface.blit(text_surface, (10,text_y))
-            text_y += 30
-        self.button.display()
-        Canvas.blit(self.surface, (self.x, self.y))
+        self.width = width
+        self.height = height
+        self.menu = menu
+        self.message = messsage
+        self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self.font = pygame.font.SysFont("Roboto", 31) 
+
     def wrap_text(self, message):
         """Wrap text to fit within max_width on a surface."""
         words = message.split(' ')
@@ -179,7 +283,7 @@ class ErrorWindow:
         current_line = []
         for word in words:
             test_line = ' '.join(current_line + [word])
-            text_surface = Font.render(test_line, True, (0, 0, 0))
+            text_surface = self.font.render(test_line, True, (0, 0, 0))
             if text_surface.get_width() <= self.width -10:
                 current_line.append(word)
             else:
@@ -189,6 +293,16 @@ class ErrorWindow:
         if current_line:
             lines.append(' '.join(current_line))
         return lines
-    def ok_button_func(self):
-        self.button.is_active = False
-        self.error = False 
+
+
+    def display(self):
+        """Display the message window""" 
+        self.message = str(self.message) if self.message is not None else "Unknown error"
+        self.surface.fill((0,0,0,100))
+        text_y = 10
+        for line in self.wrap_text(self.message):
+            text_surface = self.font.render(line, True, WHITE)
+            self.surface.blit(text_surface, (10,text_y))
+            text_y += 30
+        Canvas.blit(self.surface, (self.x, self.y))
+
