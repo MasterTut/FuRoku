@@ -11,7 +11,7 @@ manager = Manager()
 #Creates the game loop to update the screen
 def update_display():
     while True:
-        pygame.draw.rect(Canvas, (45,45,125), (0,0,Canvas.get_width(),Canvas.get_height()))
+        pygame.draw.rect(Canvas, (30,30,90), (0,0,Canvas.get_width(),Canvas.get_height()))
         #Canvas.blit(background_img, dest = background_position) 
         manager.menu_mgr._display_menus()
         manager.listener()

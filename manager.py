@@ -16,14 +16,13 @@ class MenuManager:
         self.side_menu.is_list = True
         self.side_menu.is_active = True
         self.side_menu.background = False
-        self._all_menus: Dict[str, Menu] = {self.side_menu.name : self.side_menu} 
         self.add_list_of_menu_names_to_side_menu()
         self._import_apps_to_settings_menu()
         #keep track of what is currently selected, in listener the menu and button are activated and de-activated
         self._selected_menu: Menu = self.side_menu
         self._selected_button: Button = self.side_menu.button_matrix[0][0]
         self._all_selected_buttons: list[Button] = []
-        
+        self._all_menus = self._get_all_menus()
 
     def add_list_of_menu_names_to_side_menu(self, button_width: int = 150, button_height: int = 40, vertical_spacing: int = 50) -> None:
         """Create buttons from list of button names for list-based menus."""
@@ -117,7 +116,7 @@ class MenuManager:
 
     def _get_all_menus(self) -> List[Menu]:
         """Returns a list of all menus, including all nested submenus."""
-        menu_list: List[Menu] = []
+        menu_list: List[Menu] = [self.side_menu]
 
         def collect_menus(menu: Menu) -> None:
             """Recursively collect all menus and their submenus."""
@@ -126,9 +125,9 @@ class MenuManager:
                 collect_menus(submenu)
 
         # Iterate over top-level menus
-        for menu in self._all_menus.values():
+        for menu in self.side_menu.sub_menus:
             collect_menus(menu)
-
+        
         return menu_list
 
             
@@ -214,33 +213,24 @@ class Manager:
             if self.menu_mgr._selected_menu.is_list:
                 self._switch_menu()
             else:
-                self._row_select(Direction.RIGHT)
-                #self._move_in_grid(Direction.RIGHT)
-            print("RIGHT")
+                self._move_in_grid(Direction.RIGHT)
         if key == pygame.K_LEFT:
             if self.menu_mgr._selected_menu.is_list:
                 return
             else:
-                self._row_select(Direction.LEFT)
-                #self._move_in_grid(Direction.LEFT)
-            print("LEFT")
+                self._move_in_grid(Direction.LEFT)
         if key == pygame.K_DOWN:
             if self.menu_mgr._selected_menu.is_list:
                 self._move_list(Direction.DOWN )
             else:
-                #self._move_in_grid(Direction.DOWN)
-                self._row_select(Direction.DOWN)
-            print("DOWN")
+                self._move_in_grid(Direction.DOWN)
         if key == pygame.K_UP:
             if self.menu_mgr._selected_menu.is_list:
                 self._move_list(Direction.UP )
             else:
-                #self._move_in_grid(Direction.UP)
-                self._row_select(Direction.UP)
-            print("UP")
+                self._move_in_grid(Direction.UP)
         if key == pygame.K_RETURN:
             self.menu_mgr._selected_button.action()
-            print("ENTER")
     
     def _move_list(self, direction:Direction):
         """move up or down on list menu"""
@@ -250,17 +240,15 @@ class Manager:
             self.button_index = (self.button_index +1) if self.button_index + 1 < self.total_buttons else 0 
         
         self.menu_mgr._selected_button = self.menu_mgr._selected_menu.button_matrix[0][self.button_index]
-        #self._deselect_buttons(self.menu_mgr._selected_menu)
         self._deselect_all_buttons()
 
-    
     def _switch_menu(self):
         """Switch from List Menu to nested Menu"""
-        if self.menu_mgr._all_menus[self.menu_mgr._selected_menu.name]:
-            for menu in self.menu_mgr._all_menus[self.menu_mgr._selected_menu.name].sub_menus:
-                if menu.button_matrix and menu.name ==self.menu_mgr._selected_button.name:
-                    self.menu_mgr._selected_menu = menu
-                    self._select_first_item()
+        for menu in self.menu_mgr._all_menus:
+            if menu.is_active and menu.button_matrix:
+                self.menu_mgr._selected_menu = menu
+                self._select_first_item()
+
 
     def _deselect_all_buttons(self):
         """Deselect all buttons that are not currenlty selected"""
@@ -278,8 +266,7 @@ class Manager:
     
     def _deselect_menus(self):
         """Deselect all menus that are not currenlty selected"""
-        for menu_name in self.menu_mgr._all_menus:
-            menu = self.menu_mgr._all_menus[menu_name]
+        for menu in self.menu_mgr._all_menus:
             if menu != self.menu_mgr._selected_menu:
                 menu.is_active = False
             for submenu in menu.sub_menus:
@@ -331,36 +318,6 @@ class Manager:
 
         self._deselect_all_buttons()
 
-    def _row_select(self, direction:Direction):
-        """Select 1 button per row in button matrix"""
-        selected_menu = self.menu_mgr._selected_menu
-        if direction == Direction.UP:
-            self.row = (self.row - 1) if self.row > 0 else self.total_rows - 1
-        elif direction == Direction.DOWN:
-            self.row = (self.row + 1) if self.row + 1 < self.total_rows else 0
-        elif direction == Direction.RIGHT:
-            if self.col + 1 < len(selected_menu.button_matrix[self.row]):
-                self.col += 1
-            else:
-                self.col = 0
-        elif direction == Direction.LEFT:
-            if self.col > 0:
-                self.col -= 1
-            elif selected_menu.is_locked:
-                self.col = -1
-            else:
-                return self._select_side_menu()
-        
-        # Ensure valid button selection
-        if len(selected_menu.button_matrix[self.row]) > self.col:
-            self.menu_mgr._selected_button = selected_menu.button_matrix[self.row][self.col]
-        else:
-            self.menu_mgr._selected_button = selected_menu.button_matrix[self.row][-1]
-            
-        print("row is: {idx}".format(idx=self.row))
-        #if selected_menu.is_locked:
-        #    self._deselect_buttons_per_row(selected_menu.button_matrix[self.row])
-        self._deselect_all_buttons()
 
     
     def _track_mouse_movement(self):
@@ -370,7 +327,7 @@ class Manager:
         #Need to offset the mouse position as mouse postion tracks Canvas pos and buton.rect are in corliation with the Surface
         surface_mouse_pos = (mouse_pos[0] - selected_menu.x, mouse_pos[1] - selected_menu.y)
         all_buttons = self.menu_mgr._selected_menu._get_all_buttons()
-        for menu in self.menu_mgr._get_all_menus():
+        for menu in self.menu_mgr._all_menus:
             if menu.rect.collidepoint(mouse_pos) and menu.is_active:
                 check_buttons_exists = menu._get_total_buttons_count()
                 if check_buttons_exists > 0:
