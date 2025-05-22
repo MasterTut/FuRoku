@@ -12,14 +12,12 @@ def import_menus():
     add_remove_edit = Menu(x_pos, 0, width, Canvas.get_height(), "add_remove_edit")
     add_remove_edit.transparency = 10
     add_remove_edit.is_menu_list = True
-    add_remove_edit.is_list = False
     buttons =[[{"name": "ADD"}, {"name": "EDIT"}, {"name": "REMOVE"}], [{"name": "APPS"}, {"name": "GAMES"}]]
     font = pygame.font.SysFont("Robto", 31)
     button_idx = 0
     vertical_pos = 10
     for menu_name in submenu_names:
         menu = Menu(40, vertical_pos, Canvas.get_width() -400, 150, menu_name, 20, parent_menu=add_remove_edit)
-        menu.is_list = False
         menu._set_buttons(buttons[button_idx], font=font)
         menu.transparency = 30
         vertical_pos += 200

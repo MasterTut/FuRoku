@@ -33,7 +33,7 @@ class Menu:
         self.is_active = False
         self.is_selected = False
         self.is_locked = False
-        self.is_list = True #list of buttons need to change this var name
+        self.is_button_list = False #list of buttons need to change this var name
         self.is_menu_list = False
         self.parent_menu:Menu = parent_menu if parent_menu != None else self
         #need to keep track of menus positioning on Canvas this is done by offseting the postion based on the parent menus positioning. 

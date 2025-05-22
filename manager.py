@@ -14,7 +14,7 @@ class MenuManager:
     def __init__(self) -> None:
         #Defining the base menu (side_menu) 
         self.side_menu = Menu(0, 0,Canvas.get_width(), Canvas.get_height(), name="side_menu")
-        self.side_menu.is_list = True
+        self.side_menu.is_button_list = True
         self.side_menu.is_active = True
         self.add_list_of_menu_names_to_side_menu()
         self._import_apps_to_settings_menu()
@@ -53,7 +53,6 @@ class MenuManager:
         width = int(Canvas.get_width() - (x_pos +50))
         
         new_menu = Menu(x_pos, 0, width, Canvas.get_height(), menu_name)
-        new_menu.is_list = False
         new_menu._set_buttons(apps_list, button_width=256, button_height=256)
         self.side_menu.sub_menus.append(new_menu)
     
@@ -183,7 +182,7 @@ class Manager:
     def move(self, key) -> None:
         """Menus and button naviagtion"""
         if key == pygame.K_RIGHT:
-            if self.menu_mgr._selected_menu.is_list:
+            if self.menu_mgr._selected_menu.is_button_list:
                 self._switch_menu()
             else:
                 self._move_in_grid(Direction.RIGHT)
@@ -193,12 +192,12 @@ class Manager:
             else:
                 self._move_in_grid(Direction.LEFT)
         if key == pygame.K_DOWN:
-            if self.menu_mgr._selected_menu.is_list:
+            if self.menu_mgr._selected_menu.is_button_list:
                 self._move_list(Direction.DOWN )
             else:
                 self._move_in_grid(Direction.DOWN)
         if key == pygame.K_UP:
-            if self.menu_mgr._selected_menu.is_list:
+            if self.menu_mgr._selected_menu.is_button_list:
                 self._move_list(Direction.UP )
             else:
                 self._move_in_grid(Direction.UP)
