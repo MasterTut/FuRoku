@@ -33,7 +33,8 @@ class Menu:
         self.is_active = False
         self.is_selected = False
         self.is_locked = False
-        self.is_list = True
+        self.is_list = True #list of buttons need to change this var name
+        self.is_menu_list = False
         self.parent_menu:Menu = parent_menu if parent_menu != None else self
         #need to keep track of menus positioning on Canvas this is done by offseting the postion based on the parent menus positioning. 
         self.absolute_rect = pygame.Rect(self.x + self.parent_menu.x, self.y + self.parent_menu.y, self.width, self.height) if self.parent_menu != self else self.rect

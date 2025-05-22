@@ -11,6 +11,8 @@ def import_menus():
     width = int(Canvas.get_width() - (x_pos +50))
     add_remove_edit = Menu(x_pos, 0, width, Canvas.get_height(), "add_remove_edit")
     add_remove_edit.transparency = 10
+    add_remove_edit.is_menu_list = True
+    add_remove_edit.is_list = False
     buttons =[[{"name": "ADD"}, {"name": "EDIT"}, {"name": "REMOVE"}], [{"name": "APPS"}, {"name": "GAMES"}]]
     font = pygame.font.SysFont("Robto", 31)
     button_idx = 0
