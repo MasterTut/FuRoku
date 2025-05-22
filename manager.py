@@ -17,14 +17,15 @@ class MenuManager:
         self.side_menu.is_button_list = True
         self.side_menu.is_active = True
         self.add_list_of_menu_names_to_side_menu()
-        self._import_apps_to_settings_menu()
-        self.side_menu.sub_menus[-1].sub_menus.append( menus.import_menus())
+        #self._import_apps_to_settings_menu()
+        self.side_menu.sub_menus[-1].sub_menus.append( menus.import_app_customization_menus())
         self._import_apps_to_settings_menu()
         #keep track of what is currently selected, in listener the menu and button are activated and de-activated
         self._selected_menu: Menu = self.side_menu
         self._selected_button: Button = self.side_menu.button_matrix[0][0]
         self._all_selected_buttons: list[Button] = []
         self._all_menus = self._get_all_menus()
+        menus._import_apps_to_settings_menu(self)
 
     def add_list_of_menu_names_to_side_menu(self, button_width: int = 150, button_height: int = 40, vertical_spacing: int = 50) -> None:
         """Create buttons from list of button names for list-based menus."""
@@ -102,13 +103,13 @@ class MenuManager:
             
     def _import_apps_to_settings_menu(self):
         """"Import menus to display for buttons on settings menu"""
-        #add_remove_edit_menu = AddRemoveEditAPP().menu
         settings_menu = self.side_menu.sub_menus[-1]
-        #settings_menu.sub_menus.append(add_remove_edit_menu)
+        #moved this functionality to menus.py but keeping it here for now as well
         for submenu in settings_menu.sub_menus:
             def _activate_menu():
                 self._selected_menu = submenu
                 submenu.is_active = True
+                self._selected_menu = self._selected_menu.sub_menus[0]
                 self.side_menu.is_locked = True
                 for menu in submenu._get_all_submenus():
                     menu.is_active = True
@@ -298,9 +299,9 @@ class Manager:
             self.menu_mgr._selected_menu = self.menu_mgr._selected_menu.sub_menus[self.menu_index]
             return
         elif direction == Direction.UP:
-            self.menu_index = (self.menu_index -1) if self.menu_index > 0  else self.total_menus -1 
-        elif direction == Direction.DOWN:
             self.menu_index = (self.menu_index +1) if self.menu_index + 1 < self.total_menus else 0
+        elif direction == Direction.DOWN:
+            self.menu_index = (self.menu_index -1) if self.menu_index > 0  else self.total_menus -1 
         self.menu_mgr._selected_menu = self.menu_mgr._selected_menu.parent_menu.sub_menus[self.menu_index]
 
         self._select_first_item()

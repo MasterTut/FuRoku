@@ -125,7 +125,7 @@ class Menu:
         if rows > 0:
             self.button_matrix = [[] for _ in range(int(rows))]
         for idx, button in enumerate(buttons):
-            if not self.is_list:
+            if not self.is_button_list:
                 row = idx // buttons_per_row
                 col = idx % buttons_per_row
                 x = x_start + col * (button_width + padding)
@@ -150,7 +150,8 @@ class Menu:
                 new_button.action = action 
                 
             elif "action" in button:
-                new_button.action = button['action'] 
+                pass
+                #new_button.action = button['action'] 
 
             if "image" in button:
                 image = pygame.image.load(button["image"])
