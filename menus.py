@@ -2,7 +2,7 @@
 import json
 from components import * 
 
-def setup_side_menu() -> Menu:
+def setup_side_menu(manager) -> Menu:
     """intialize SideMenu"""
     side_menu = Menu(0, 0,Canvas.get_width(), Canvas.get_height(), name="side_menu")
     side_menu.is_button_list = True
@@ -12,21 +12,41 @@ def setup_side_menu() -> Menu:
     vertical_spacing: int = 50
     y_offset = 90
     x_pos = 50
-    for button_text in read_file():
-           #Change option for Settings
-           if button_text == "SETTINGS":
+    menus = read_file()
+    side_menu.sub_menus = menus
+    for menu in menus:
+           #Setup Settings button for side menu list
+           if menu.name == "SETTINGS":
                y_pos = (side_menu.height * .9)
-               button = Button(x_pos + 35, y_pos, button_width, button_height, side_menu, name=button_text)
+               button = Button(x_pos + 35, y_pos, button_width, button_height, side_menu, name=menu.name)
                button.background = False
                button.image = pygame.image.load(SETTINGS_GEAR)
                button.is_image = True
                
            else:
-               button = Button(x_pos, y_offset, button_width, button_height, side_menu, name=button_text)
+               #Add the rest of the text buttons on the side menu
+               button = Button(x_pos, y_offset, button_width, button_height, side_menu, name=menu.name)
                button.select_rectangle = True
                button.background =False
            side_menu.button_matrix[0].append(button)
            y_offset += vertical_spacing
+    
+    #Setting APP actions for setting menu
+    settings_menu = side_menu.sub_menus[-1]
+    settings_menu.sub_menus.append(import_app_customization_menus()) 
+
+    for submenu in settings_menu.sub_menus:
+        def _activate_menu():
+            manager._selected_menu = submenu
+            submenu.is_active = True
+            manager._selected_menu = manager._selected_menu.sub_menus[0]
+            manager.side_menu.is_locked = True
+            for menu in submenu._get_all_submenus():
+                menu.is_active = True
+        for button in settings_menu._get_all_buttons():
+            print(button.name, submenu.name)
+            if button.name ==  submenu.name:
+                button.action = _activate_menu 
 
     return side_menu
 
@@ -55,20 +75,6 @@ def import_app_customization_menus() -> Menu:
 
     return add_remove_edit
 
-def _import_apps_to_settings_menu(menu_manager):
-    """"Import menus to display for buttons on settings menu"""
-    menu = menu_manager.side_menu.sub_menus[-1]
-    for submenu in menu.sub_menus:
-        def _activate_menu():
-            menu_manager._selected_menu = submenu
-            submenu.is_active = True
-            menu_manager._selected_menu = menu_manager._selected_menu.sub_menus[0]
-            menu_manager.side_menu.is_locked = True
-            for menu in submenu._get_all_submenus():
-                menu.is_active = True
-        for button in menu._get_all_buttons():
-            if button.name ==  submenu.name:
-                button.action = _activate_menu 
 
    
 def import_apps(menu_name, apps_list) -> Menu:
@@ -82,7 +88,7 @@ def import_apps(menu_name, apps_list) -> Menu:
    
 def read_file():
        """reads apps.json and send to import apps"""
-       custom_menu_names = [] 
+       list_of_menus = []
 
        if not os.path.exists(APPS_PATH):
            print("apps.json not found, creating a default file.")
@@ -93,9 +99,8 @@ def read_file():
        with open(APPS_PATH, 'r') as apps:
            data = json.load(apps)
        for menu_name in data:
-           custom_menu_names.append(menu_name)
-           import_apps(menu_name, data[menu_name]) 
-       return custom_menu_names
+           list_of_menus.append(import_apps(menu_name, data[menu_name]))
+       return list_of_menus
 
 
 def _Submit_button_action(self):
