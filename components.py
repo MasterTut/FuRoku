@@ -33,7 +33,8 @@ class Menu:
         self.is_active = False
         self.is_selected = False
         self.is_locked = False
-        self.is_list = True
+        self.is_button_list = False #list of buttons need to change this var name
+        self.is_menu_list = False
         self.parent_menu:Menu = parent_menu if parent_menu != None else self
         #need to keep track of menus positioning on Canvas this is done by offseting the postion based on the parent menus positioning. 
         self.absolute_rect = pygame.Rect(self.x + self.parent_menu.x, self.y + self.parent_menu.y, self.width, self.height) if self.parent_menu != self else self.rect
@@ -124,7 +125,7 @@ class Menu:
         if rows > 0:
             self.button_matrix = [[] for _ in range(int(rows))]
         for idx, button in enumerate(buttons):
-            if not self.is_list:
+            if not self.is_button_list:
                 row = idx // buttons_per_row
                 col = idx % buttons_per_row
                 x = x_start + col * (button_width + padding)
@@ -149,7 +150,8 @@ class Menu:
                 new_button.action = action 
                 
             elif "action" in button:
-                new_button.action = button['action'] 
+                pass
+                #new_button.action = button['action'] 
 
             if "image" in button:
                 image = pygame.image.load(button["image"])

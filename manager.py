@@ -14,17 +14,18 @@ class MenuManager:
     def __init__(self) -> None:
         #Defining the base menu (side_menu) 
         self.side_menu = Menu(0, 0,Canvas.get_width(), Canvas.get_height(), name="side_menu")
-        self.side_menu.is_list = True
+        self.side_menu.is_button_list = True
         self.side_menu.is_active = True
         self.add_list_of_menu_names_to_side_menu()
-        self._import_apps_to_settings_menu()
-        self.side_menu.sub_menus[-1].sub_menus.append( menus.import_menus())
+        #self._import_apps_to_settings_menu()
+        self.side_menu.sub_menus[-1].sub_menus.append( menus.import_app_customization_menus())
         self._import_apps_to_settings_menu()
         #keep track of what is currently selected, in listener the menu and button are activated and de-activated
         self._selected_menu: Menu = self.side_menu
         self._selected_button: Button = self.side_menu.button_matrix[0][0]
         self._all_selected_buttons: list[Button] = []
         self._all_menus = self._get_all_menus()
+        menus._import_apps_to_settings_menu(self)
 
     def add_list_of_menu_names_to_side_menu(self, button_width: int = 150, button_height: int = 40, vertical_spacing: int = 50) -> None:
         """Create buttons from list of button names for list-based menus."""
@@ -53,7 +54,6 @@ class MenuManager:
         width = int(Canvas.get_width() - (x_pos +50))
         
         new_menu = Menu(x_pos, 0, width, Canvas.get_height(), menu_name)
-        new_menu.is_list = False
         new_menu._set_buttons(apps_list, button_width=256, button_height=256)
         self.side_menu.sub_menus.append(new_menu)
     
@@ -103,13 +103,13 @@ class MenuManager:
             
     def _import_apps_to_settings_menu(self):
         """"Import menus to display for buttons on settings menu"""
-        #add_remove_edit_menu = AddRemoveEditAPP().menu
         settings_menu = self.side_menu.sub_menus[-1]
-        #settings_menu.sub_menus.append(add_remove_edit_menu)
+        #moved this functionality to menus.py but keeping it here for now as well
         for submenu in settings_menu.sub_menus:
             def _activate_menu():
                 self._selected_menu = submenu
                 submenu.is_active = True
+                self._selected_menu = self._selected_menu.sub_menus[0]
                 self.side_menu.is_locked = True
                 for menu in submenu._get_all_submenus():
                     menu.is_active = True
@@ -139,9 +139,11 @@ class Manager:
     def __init__(self) -> None:
         self.menu_mgr = MenuManager()
         self.sound = Mixer.Sound(CLICK_SOUND)
+        self.menu_index =0
     def listener(self):
         """Listen for keyboard and mouse input and sends to Move function"""
         self.total_buttons = self.menu_mgr._selected_menu._get_total_buttons_count()
+        self.total_menus = len(self.menu_mgr._selected_menu.sub_menus) if self.menu_mgr._selected_menu.is_menu_list else 0
         if self.total_buttons > 0:
             self.button_index, self.row = self.menu_mgr._selected_menu._get_active_button_idx_row()
             self.total_rows = len(self.menu_mgr._selected_menu.button_matrix)
@@ -181,22 +183,22 @@ class Manager:
     def move(self, key) -> None:
         """Menus and button naviagtion"""
         if key == pygame.K_RIGHT:
-            if self.menu_mgr._selected_menu.is_list:
-                self._switch_menu(self.menu_mgr._selected_menu )
+            if self.menu_mgr._selected_menu.is_button_list:
+                self._switch_menu()
             else:
                 self._move_in_grid(Direction.RIGHT)
         if key == pygame.K_LEFT:
-            if self.menu_mgr._selected_menu.is_list:
+            if self.menu_mgr._selected_menu == self.menu_mgr.side_menu:
                 return
             else:
                 self._move_in_grid(Direction.LEFT)
         if key == pygame.K_DOWN:
-            if self.menu_mgr._selected_menu.is_list:
+            if self.menu_mgr._selected_menu.is_button_list:
                 self._move_list(Direction.DOWN )
             else:
                 self._move_in_grid(Direction.DOWN)
         if key == pygame.K_UP:
-            if self.menu_mgr._selected_menu.is_list:
+            if self.menu_mgr._selected_menu.is_button_list:
                 self._move_list(Direction.UP )
             else:
                 self._move_in_grid(Direction.UP)
@@ -205,21 +207,21 @@ class Manager:
     
     def _move_list(self, direction:Direction):
         """move up or down on list menu"""
-        if self.total_buttons == 0:
-            self._move_in_menu_list()
-        elif direction == Direction.UP:
+        if direction == Direction.UP:
             self.button_index = (self.button_index -1) if self.button_index > 0  else self.total_buttons -1 
         elif direction == Direction.DOWN:
             self.button_index = (self.button_index +1) if self.button_index + 1 < self.total_buttons else 0
         self.menu_mgr._selected_button = self.menu_mgr._selected_menu.button_matrix[0][self.button_index]
         self._deselect_all_buttons()
 
-    def _switch_menu(self, menu:Menu):
+    def _switch_menu(self):
         """Switch to nested Menu"""
-        for menu in menu.sub_menus:
+        for menu in self.menu_mgr._selected_menu.sub_menus:
              if menu.is_active and len(menu.button_matrix[0])>0:
                         self.menu_mgr._selected_menu = menu
-                        self._select_first_item()
+             elif menu.is_active and menu.is_menu_list:
+                self.menu_mgr._selected_menu = menu.sub_menus[-1]
+             self._select_first_item()
 
     def _deselect_all_buttons(self):
         """Deselect all buttons that are not currenlty selected"""
@@ -261,15 +263,19 @@ class Manager:
         """Handle navigation in a grid menu."""
         selected_menu = self.menu_mgr._selected_menu
         if direction == Direction.UP:
-            self.row = (self.row - 1) if self.row > 0 else self.total_rows - 1
-        elif direction == Direction.DOWN:
-            print(len(selected_menu.button_matrix))
-            if len(selected_menu.button_matrix[0]) > 0:
-                self.row = (self.row + 1) if self.row + 1 < self.total_rows else 0
+            if self.menu_mgr._selected_menu.parent_menu.is_menu_list:
+                self._move_in_menu_list(Direction.UP)
             else:
-                print("true")
+                self.row = (self.row - 1) if self.row > 0 else self.total_rows - 1
+        elif direction == Direction.DOWN:
+            if self.menu_mgr._selected_menu.parent_menu.is_menu_list:
+                self._move_in_menu_list(Direction.DOWN)
+            elif len(selected_menu.button_matrix[0]) > 0:
+                self.row = (self.row + 1) if self.row + 1 < self.total_rows else 0
         elif direction == Direction.RIGHT:
-            if self.col + 1 < len(selected_menu.button_matrix[self.row]):
+            if selected_menu.is_menu_list:
+                return self._switch_menu()
+            elif self.col + 1 < len(selected_menu.button_matrix[self.row]):
                 self.col += 1
             else:
                 self.col = 0
@@ -287,10 +293,18 @@ class Manager:
 
         self._deselect_all_buttons()
 
-    def _move_in_menu_list(self):
-        if self.menu_mgr._selected_menu == self.menu_mgr._selected_menu.parent_menu:
-            self.menu_mgr._selected_menu = self.menu_mgr._selected_menu.sub_menus[0]
+    def _move_in_menu_list(self, direction):
+        """move up or down menus"""
+        if direction == Direction.RIGHT:
+            self.menu_mgr._selected_menu = self.menu_mgr._selected_menu.sub_menus[self.menu_index]
+            return
+        elif direction == Direction.UP:
+            self.menu_index = (self.menu_index +1) if self.menu_index + 1 < self.total_menus else 0
+        elif direction == Direction.DOWN:
+            self.menu_index = (self.menu_index -1) if self.menu_index > 0  else self.total_menus -1 
+        self.menu_mgr._selected_menu = self.menu_mgr._selected_menu.parent_menu.sub_menus[self.menu_index]
 
+        self._select_first_item()
     
     def _track_mouse_movement(self):
         """selects menu and button based on where the mouse is on the screen"""
