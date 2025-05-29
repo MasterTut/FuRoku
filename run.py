@@ -15,7 +15,6 @@ def update_display():
         #pygame.draw.rect(background_surface, (30,30,90), (0,0,Canvas.get_width(),Canvas.get_height()))
         #Canvas.blit(background_surface,background_position)
         Canvas.blit(background_img, dest = background_position) 
-        manager.menu_mgr._display_menus()
         manager.listener()
         clock.tick(FPS)
         pygame.display.update()

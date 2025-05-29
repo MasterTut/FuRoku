@@ -14,7 +14,7 @@ background_img  = pygame.image.load(BACKGROUND_IMAGE)
 background_img = pygame.transform.scale(background_img, (resolutionWidth, resolutionHeight))
 background_position = (0, 0)
 Font = pygame.font.Font(FONT_PATH, FONT_SIZE)
-
+BUTTON_ACTION_MAP = {}
 
 class Menu:
     """Defines what a menu is and does"""
@@ -39,10 +39,12 @@ class Menu:
         #need to keep track of menus positioning on Canvas this is done by offseting the postion based on the parent menus positioning. 
         self.absolute_rect = pygame.Rect(self.x + self.parent_menu.x, self.y + self.parent_menu.y, self.width, self.height) if self.parent_menu != self else self.rect
         self.sub_menus: List[Menu] = []
+        self.sub_menus_dict: dict = {} 
         self.button_matrix:  List[List[Button]] = [[]]
         self.input_boxs_fields = []
         self.input_boxes: list[TextInput] = []
         self.text_window: TextWindow = TextWindow(self.x, self.y, self.width, self.height, self, messsage='NotSet', name='Default')#Creates a text window on menu if one exists
+        self.button_action_map = {}
 
         
     def display_text_window(self):
@@ -125,15 +127,16 @@ class Menu:
         if rows > 0:
             self.button_matrix = [[] for _ in range(int(rows))]
         for idx, button in enumerate(buttons):
+            button_name = button["name"]
             if not self.is_button_list:
                 row = idx // buttons_per_row
                 col = idx % buttons_per_row
                 x = x_start + col * (button_width + padding)
                 y = y_start + padding + row * (button_height + padding)
-                new_button = Button(x,y,button_width,button_height, self,font, button["name"])
+                new_button = Button(x,y,button_width,button_height, self,font, button_name)
                 self.button_matrix[int(row)].append(new_button)
             else:
-                new_button = Button(x_pos + x_start,y_pos + 50,button_width,button_height, self,font, button["name"])
+                new_button = Button(x_pos + x_start,y_pos + 50,button_width,button_height, self,font, button_name)
                 set_buttons.append(new_button)
                 x_pos += horizontal_spacing
                 new_row: List[Button] = set_buttons
@@ -141,22 +144,17 @@ class Menu:
                      self.button_matrix[0] = new_row
                 else:
                     self.button_matrix.append(new_row)
-            if "url" in button:
-
-                param = ' --start-fullscreen --kiosk --user-agent="Roku/DVP-12.0"'
-                url = button['url']  
-                def action():
-                    webbrowser.open(url) 
-                new_button.action = action 
                 
-            elif "action" in button:
-                pass
-                #new_button.action = button['action'] 
-
             if "image" in button:
                 image = pygame.image.load(button["image"])
                 new_button.image = pygame.transform.scale(image, (button_width, button_height))
                 new_button.is_image = True
+    
+    def _set_button_actions(self):
+        for button_list in self.button_matrix:
+            for button in button_list:
+                if button.name in self.button_action_map:
+                    button.action = self.button_action_map[button.name]
 
     def _get_all_submenus(self):
         """Returns a list all nested submenus."""
@@ -174,6 +172,13 @@ class Menu:
         
         return menu_list
     
+    def _convert_submenu_list_to_dict(self) -> Dict:
+        sub_menu_dict = {}
+        for menu in self.sub_menus:
+            sub_menu_dict[menu.name] = menu
+        return sub_menu_dict
+            
+    
     def _print_button_matrix(self):
         """adding a diagnostic method to look at the matrix"""
         #del when done
@@ -182,7 +187,7 @@ class Menu:
                 print("row is: {idx} name: {button}".format(idx=idx, button=button.name))
 
 class Button:
-    def __init__(self, x, y, width, height, menu:Menu,font:pygame.font.Font=Font, name='unnamed'):
+    def __init__(self, x, y, width, height, menu:Menu,font:pygame.font.Font=Font, name='unnamed' ):
         self.name = name
         self.x = x
         self.y = y
@@ -269,8 +274,6 @@ class Text:
         self.background_rect = pygame.Rect(x-10, y-10, self.width + background_x_offset, self.height + background_y_offset)
         self.highlighted = False
         self.background = False
-        
-
 
     def display_background(self):
         """"Displays background"""
