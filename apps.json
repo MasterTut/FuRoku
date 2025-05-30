@@ -15,6 +15,29 @@
             "name": "funtogo2",
             "image": "./Assets/Images/Apps/addApp.png",
             "dementions": 256
+        },
+        {
+            "name": "Netflix",
+            "image": "./Assets/Images/Apps/netflix.jpg",
+            "url": "https://netflix.com",
+            "dementions": 256
+        },
+        {
+            "name": "funtogo",
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
+        },
+        {
+            "name": "funtogo2",
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
+        },
+
+        {
+            "name": "Netflix",
+            "image": "./Assets/Images/Apps/netflix.jpg",
+            "url": "https://netflix.com",
+            "dementions": 256
         }
     ],
     "GAMES": [],

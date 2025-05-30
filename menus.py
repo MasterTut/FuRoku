@@ -2,6 +2,7 @@
 import json
 from components import * 
 
+
 def read_file()-> Dict:
        """reads apps.json and send to import apps"""
        #check if file exists otherwise create a default one
@@ -28,7 +29,7 @@ def setup_side_menu(manager) -> Menu:
     """intialize SideMenu"""
     side_menu = Menu(0, 0,Canvas.get_width(), Canvas.get_height(), name="side_menu")
     side_menu.is_button_list = True
-    side_menu.is_active = True
+    side_menu.is_displayed = True
     button_width: int = 150 
     button_height: int = 40 
     vertical_spacing: int = 50
@@ -62,7 +63,7 @@ def setup_side_menu(manager) -> Menu:
                button.image = pygame.image.load(SETTINGS_GEAR)
                button.is_image = True
                settings_menu = menu 
-               app_customization_menu = import_app_customization_menus()
+               app_customization_menu = import_app_customization_menus(manager)
                settings_menu.sub_menus.append(app_customization_menu)
            else:
                #Add the rest of the text buttons on the side menu
@@ -76,13 +77,13 @@ def setup_side_menu(manager) -> Menu:
     if settings_menu:
         for submenu in settings_menu.sub_menus:
             def _activate_menu():
-                manager._selected_menu.is_active = False
+                manager._selected_menu.is_displayed = False
                 manager._selected_menu = submenu
-                submenu.is_active = True
+                submenu.is_displayed = True
                 manager._selected_menu = manager._selected_menu.sub_menus[0]
                 manager.side_menu.is_locked = True
                 for menu in submenu.sub_menus:
-                    menu.is_active = True
+                    menu.is_displayed = True
             for button in settings_menu._get_all_buttons():
                 if button.name ==  submenu.name:
                     button.action = _activate_menu
@@ -90,7 +91,7 @@ def setup_side_menu(manager) -> Menu:
     side_menu.sub_menus_dict = side_menu._convert_submenu_list_to_dict()
     return side_menu
 
-def import_app_customization_menus() -> Menu:
+def import_app_customization_menus(manager) -> Menu:
     """initalize App Customization Menu"""
     #submenu_names = ["action_select", "menu_select", "submit_cancel"]
     submenu_names = ["action_select","menu_select",  "submit_cancel"]
@@ -100,32 +101,50 @@ def import_app_customization_menus() -> Menu:
     add_remove_edit.transparency = 10
     add_remove_edit.is_menu_list = True
     button_action_map = {}
+    #set this flaged based on wether you are moving or editing an app
     buttons =[[{"name": "ADD"}, {"name": "EDIT"}, {"name": "REMOVE"}], [{"name": "APPS"}, {"name": "GAMES"}], [{"name": "SUBMIT"}, {"name": "CANCEL"}]]
 
     font = pygame.font.SysFont("Robto", 31)
     #Mapping Actions of buttons
     def _CANCEL():
-        print(add_remove_edit.parent_menu.name)
-        add_remove_edit.parent_menu.parent_menu.is_locked = False
-        #setting_menu = manager.side_menu.sub_menu_dict["SETTINGS"]
+        manager.side_menu.is_locked = False
     def _APPS():
         for menu in add_remove_edit.sub_menus[1].sub_menus:
             if menu.name == 'APPS':
-                menu.is_active = True
+                menu.is_displayed = True
             else:
-                menu.is_active = False
+                menu.is_displayed = False
     def _GAMES():
         for menu in add_remove_edit.sub_menus[1].sub_menus:
             if menu.name == 'GAMES':
-                menu.is_active = True
+                menu.is_displayed = True
             else:
-                menu.is_active = False
-
+                menu.is_displayed = False
+    def _ADD():
+        pass
+    def _REMOVE():
+        manager.action_state = 'REMOVE'
+    def _EDIT():
+        manager.action_state = 'EDIT'
+    def _APP_ACTION():
+        button = manager._selected_button.name
+        menu = manager._selected_menu.name
+        if manager.action_state == 'REMOVE':
+            CUSTOM_MENU_DATA[menu] = [app for app in CUSTOM_MENU_DATA[menu] if app["name"] != button]
+        if manager.action_state == 'EDIT':
+            print('EDIT')
+        else:
+            pass
+    
     button_action_map['CANCEL'] = _CANCEL
     button_action_map['APPS'] = _APPS
     button_action_map['GAMES'] = _GAMES
+    button_action_map['ADD'] = _ADD
+    button_action_map['REMOVE'] = _REMOVE
+    button_action_map['EDIT'] = _EDIT
     button_idx = 0
     vertical_pos = 10
+    #Assigning every menu the button action map, this means there can be no duplicate button names
     for menu_name in submenu_names:
         menu = Menu(40, vertical_pos, Canvas.get_width() -400, 150, menu_name, 20, parent_menu=add_remove_edit)
         if len(buttons) >= button_idx:
@@ -141,10 +160,15 @@ def import_app_customization_menus() -> Menu:
     #add another menu for displaying apps 
     for menu_name in CUSTOM_MENU_DATA:
         if menu_name != "SETTINGS":
-            x_pos_sub_menu = int(Canvas.get_width() * .15)
+            x_pos_sub_menu = 20
             width = int(Canvas.get_width() - (x_pos_sub_menu +50))
-            add_remove_edit.sub_menus[1].sub_menus.append(import_apps(menu_name, CUSTOM_MENU_DATA[menu_name], width, x_pos_sub_menu, y_pos=vertical_pos,button_dementions =48))
-
+            new_menu = import_apps(menu_name, CUSTOM_MENU_DATA[menu_name], width, x_pos_sub_menu, y_pos=vertical_pos,button_dementions =48)
+            new_menu.transparency = 30
+            new_menu.parent_menu = add_remove_edit
+            add_remove_edit.sub_menus.append(new_menu)
+            for button_list in new_menu.button_matrix:
+                for button in button_list:
+                    button.action = _APP_ACTION 
     
     add_remove_edit.sub_menus_dict = add_remove_edit._convert_submenu_list_to_dict()
     return add_remove_edit

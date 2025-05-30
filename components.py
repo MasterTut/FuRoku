@@ -4,7 +4,6 @@ import webbrowser
 #Custom Import 
 from settings import *
 
-
 #Init
 Mixer = pygame.mixer
 Mixer.init()
@@ -30,7 +29,7 @@ class Menu:
         #Creates multiple transparents rects on menu
         #self.backgrounds: list[pygame.Rect] = []
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        self.is_active = False
+        self.is_displayed = False
         self.is_selected = False
         self.is_locked = False
         self.is_button_list = False #list of buttons need to change this var name
@@ -45,8 +44,9 @@ class Menu:
         self.input_boxes: list[TextInput] = []
         self.text_window: TextWindow = TextWindow(self.x, self.y, self.width, self.height, self, messsage='NotSet', name='Default')#Creates a text window on menu if one exists
         self.button_action_map = {}
-
-        
+        #menu state fields assign addional variables based on states of menus
+        self.last_button_selected = None 
+    
     def display_text_window(self):
         self.text_window.display()
     def display_input_boxes(self):
@@ -55,9 +55,10 @@ class Menu:
     def display_buttons(self):
         for button in self._get_all_buttons():
             button.display()
+            self.last_button_selected = button if button.is_selected else self.last_button_selected
      
     def display(self):
-        if self.is_active:
+        if self.is_displayed:
             if self.text_window.name != 'Default':
                 self.text_window.display()
             if self.button_matrix:
@@ -96,12 +97,12 @@ class Menu:
     
     def _get_active_button_idx_row(self):
         """get active button idx and row"""
-        #currently only returning the first button that shows active, may need to adjust this
+        #currently only returning the first button that shows selected, may need to adjust this
         idx = 0
         row = 0
         for array in self.button_matrix:
             for button in array:
-                if button.is_active:
+                if button.is_selected:
                     row = self.button_matrix.index(array)
                     idx = array.index(button)
         return idx, row
@@ -149,6 +150,7 @@ class Menu:
                 image = pygame.image.load(button["image"])
                 new_button.image = pygame.transform.scale(image, (button_width, button_height))
                 new_button.is_image = True
+
     
     def _set_button_actions(self):
         for button_list in self.button_matrix:
@@ -194,7 +196,7 @@ class Button:
         self.width = width
         self.height = height
         self.font =font
-        self.is_active = False
+        self.is_displayed = False
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.menu = menu
         self.menu_surface = menu.surface
@@ -208,7 +210,8 @@ class Button:
         self.is_image = False
         self.image = pygame.image.load(TEST_BUTTON_IMAGE)
         #the postion of the button on the canvas vs Surface
-        self.absolute_rect = self._absolute_rect() 
+        self.absolute_rect = self._absolute_rect()
+        self.is_selected = False
         
     def _absolute_rect(self):
         x_offset = self.x + self.menu.absolute_rect.x
@@ -230,7 +233,7 @@ class Button:
                               self.image.get_width() + 2 * padding, 
                               self.image.get_height() + 2 * padding))
         
-        if self.is_active:
+        if self.is_selected:
             size = self.image.get_size()
             if size == (48, 48):
                 scaled_image = pygame.transform.scale2x(self.image) 
@@ -253,7 +256,7 @@ class Button:
             if self.background:
                 self.text.display_background()
             self.text.display()
-        if self.is_active:
+        if self.is_selected:
             self.text.highlighted = True
         else:
             self.text.highlighted = False
