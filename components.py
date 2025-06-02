@@ -4,7 +4,6 @@ import webbrowser
 #Custom Import 
 from settings import *
 
-
 #Init
 Mixer = pygame.mixer
 Mixer.init()
@@ -14,7 +13,7 @@ background_img  = pygame.image.load(BACKGROUND_IMAGE)
 background_img = pygame.transform.scale(background_img, (resolutionWidth, resolutionHeight))
 background_position = (0, 0)
 Font = pygame.font.Font(FONT_PATH, FONT_SIZE)
-
+BUTTON_ACTION_MAP = {}
 
 class Menu:
     """Defines what a menu is and does"""
@@ -27,12 +26,11 @@ class Menu:
         self.height = height
         self.surface = pygame.Surface((self.width, self.height),pygame.SRCALPHA)
         self.transparency = 0
-        #Creates multiple transparents rects on menu
-        #self.backgrounds: list[pygame.Rect] = []
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        self.is_active = False
+        self.is_displayed = False
         self.is_selected = False
         self.is_locked = False
+        self.auto_hide = False
         self.is_button_list = False #list of buttons need to change this var name
         self.is_menu_list = False
         self.parent_menu:Menu = parent_menu if parent_menu != None else self
@@ -40,11 +38,19 @@ class Menu:
         self.absolute_rect = pygame.Rect(self.x + self.parent_menu.x, self.y + self.parent_menu.y, self.width, self.height) if self.parent_menu != self else self.rect
         self.sub_menus: List[Menu] = []
         self.button_matrix:  List[List[Button]] = [[]]
+        #creating dictionaries for easy refrence
+        self.sub_menus_dict: dict = {}
+        self.button_dict: dict = {}
         self.input_boxs_fields = []
         self.input_boxes: list[TextInput] = []
         self.text_window: TextWindow = TextWindow(self.x, self.y, self.width, self.height, self, messsage='NotSet', name='Default')#Creates a text window on menu if one exists
-
-        
+        self.button_action_map = {}
+        #menu state fields assign addional variables based on states of menus
+        self.last_button_selected = None 
+        self.sub_menus_buttons_active: list[Button]= []
+        #button to activate menu when selected 
+        self.activate_button: Button = Button(0, 0, 0, 0, self)
+    
     def display_text_window(self):
         self.text_window.display()
     def display_input_boxes(self):
@@ -53,9 +59,19 @@ class Menu:
     def display_buttons(self):
         for button in self._get_all_buttons():
             button.display()
-     
+            self.last_button_selected = button if button.is_selected else self.last_button_selected
+    def listener(self):
+        """updates states"""
+        self.sub_menus_buttons_active = self._update_submenus_selected_buttons()
+        if self.activate_button.is_selected and self.parent_menu.is_locked == False:
+            self.is_displayed = True
+        elif self.auto_hide:
+            self.is_displayed = False
+
     def display(self):
-        if self.is_active:
+        """Displays all buttons text windows input boxs and buttons on menu"""
+        self.listener()
+        if self.is_displayed:
             if self.text_window.name != 'Default':
                 self.text_window.display()
             if self.button_matrix:
@@ -75,14 +91,14 @@ class Menu:
             else:
                 transparency = self.transparency
             pygame.draw.rect(self.surface, (0,0,0,transparency), (0,0,self.width, self.height),border_radius=self.radius)
-        
     
     def _get_total_buttons_count(self):
-        """this is used to determine movement how many rows to create and movement on menu"""
+        """this is to determine how many rows"""
         total_buttons = 0
         for row in self.button_matrix:
             total_buttons += len(row)
         return total_buttons
+    
     def _get_all_buttons(self):
         """Loops through button matrix and appends all to a single list"""
         all_buttons = []
@@ -94,12 +110,12 @@ class Menu:
     
     def _get_active_button_idx_row(self):
         """get active button idx and row"""
-        #currently only returning the first button that shows active, may need to adjust this
+        #currently only returning the first button that shows selected, may need to adjust this
         idx = 0
         row = 0
         for array in self.button_matrix:
             for button in array:
-                if button.is_active:
+                if button.is_selected:
                     row = self.button_matrix.index(array)
                     idx = array.index(button)
         return idx, row
@@ -125,15 +141,16 @@ class Menu:
         if rows > 0:
             self.button_matrix = [[] for _ in range(int(rows))]
         for idx, button in enumerate(buttons):
+            button_name = button["name"]
             if not self.is_button_list:
                 row = idx // buttons_per_row
                 col = idx % buttons_per_row
                 x = x_start + col * (button_width + padding)
                 y = y_start + padding + row * (button_height + padding)
-                new_button = Button(x,y,button_width,button_height, self,font, button["name"])
+                new_button = Button(x,y,button_width,button_height, self,font, button_name)
                 self.button_matrix[int(row)].append(new_button)
             else:
-                new_button = Button(x_pos + x_start,y_pos + 50,button_width,button_height, self,font, button["name"])
+                new_button = Button(x_pos + x_start,y_pos + 50,button_width,button_height, self,font, button_name)
                 set_buttons.append(new_button)
                 x_pos += horizontal_spacing
                 new_row: List[Button] = set_buttons
@@ -141,22 +158,21 @@ class Menu:
                      self.button_matrix[0] = new_row
                 else:
                     self.button_matrix.append(new_row)
-            if "url" in button:
-
-                param = ' --start-fullscreen --kiosk --user-agent="Roku/DVP-12.0"'
-                url = button['url']  
-                def action():
-                    webbrowser.open(url) 
-                new_button.action = action 
                 
-            elif "action" in button:
-                pass
-                #new_button.action = button['action'] 
-
             if "image" in button:
                 image = pygame.image.load(button["image"])
                 new_button.image = pygame.transform.scale(image, (button_width, button_height))
                 new_button.is_image = True
+
+            self.button_dict[button_name] = new_button
+
+    
+    def _set_button_actions(self):
+        """set the button actions based on a dict of methods"""
+        for button_list in self.button_matrix:
+            for button in button_list:
+                if button.name in self.button_action_map:
+                    button.action = self.button_action_map[button.name]
 
     def _get_all_submenus(self):
         """Returns a list all nested submenus."""
@@ -174,6 +190,18 @@ class Menu:
         
         return menu_list
     
+    def _update_submenu_dict(self) -> None:
+        """using this is for easy refrence of menus, but have not utilized yet"""
+        for menu in self.sub_menus:
+            self.sub_menus_dict[menu.name] = menu
+            
+    def _update_submenus_selected_buttons(self) -> List:
+        """creates list of buttons on submenus that are currenlty in the selected state"""
+        selected_buttons = []
+        for menu in self._get_all_submenus():
+            selected_buttons.append(menu.last_button_selected)
+        return selected_buttons
+
     def _print_button_matrix(self):
         """adding a diagnostic method to look at the matrix"""
         #del when done
@@ -182,14 +210,14 @@ class Menu:
                 print("row is: {idx} name: {button}".format(idx=idx, button=button.name))
 
 class Button:
-    def __init__(self, x, y, width, height, menu:Menu,font:pygame.font.Font=Font, name='unnamed'):
+    def __init__(self, x, y, width, height, menu:Menu,font:pygame.font.Font=Font, name='unnamed' ):
         self.name = name
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.font =font
-        self.is_active = False
+        self.is_displayed = False
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self.menu = menu
         self.menu_surface = menu.surface
@@ -203,7 +231,8 @@ class Button:
         self.is_image = False
         self.image = pygame.image.load(TEST_BUTTON_IMAGE)
         #the postion of the button on the canvas vs Surface
-        self.absolute_rect = self._absolute_rect() 
+        self.absolute_rect = self._absolute_rect()
+        self.is_selected = False
         
     def _absolute_rect(self):
         x_offset = self.x + self.menu.absolute_rect.x
@@ -225,7 +254,7 @@ class Button:
                               self.image.get_width() + 2 * padding, 
                               self.image.get_height() + 2 * padding))
         
-        if self.is_active:
+        if self.is_selected:
             size = self.image.get_size()
             if size == (48, 48):
                 scaled_image = pygame.transform.scale2x(self.image) 
@@ -248,10 +277,12 @@ class Button:
             if self.background:
                 self.text.display_background()
             self.text.display()
-        if self.is_active:
+        if self.is_selected:
             self.text.highlighted = True
         else:
             self.text.highlighted = False
+    
+        
 
 class Text:
     """creates text for buttons"""
@@ -269,8 +300,6 @@ class Text:
         self.background_rect = pygame.Rect(x-10, y-10, self.width + background_x_offset, self.height + background_y_offset)
         self.highlighted = False
         self.background = False
-        
-
 
     def display_background(self):
         """"Displays background"""

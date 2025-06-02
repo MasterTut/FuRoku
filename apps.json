@@ -3,67 +3,75 @@
         {
             "name": "Netflix",
             "image": "./Assets/Images/Apps/netflix.jpg",
-            "url": "https://netflix.com"
+            "url": "https://netflix.com",
+            "dementions": 256
         },
         {
             "name": "funtogo",
-            "image": "./Assets/Images/Apps/addApp.png"
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
         },
         {
             "name": "funtogo2",
-            "image": "./Assets/Images/Apps/addApp.png"
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
         },
         {
-            "name": "funtogo3",
-            "image": "./Assets/Images/Apps/addApp.png"
-        },
-        {
-            "name": "funtimes",
-            "image": "./Assets/Images/Apps/addApp.png"
-        },
-        {
-            "name": "AddApp",
-            "image": "./Assets/Images/Apps/netflix.jpg"
+            "name": "Netflix",
+            "image": "./Assets/Images/Apps/netflix.jpg",
+            "url": "https://netflix.com",
+            "dementions": 256
         },
         {
             "name": "funtogo",
-            "image": "./Assets/Images/Apps/addApp.png"
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
         },
         {
             "name": "funtogo2",
-            "image": "./Assets/Images/Apps/addApp.png"
-        },
-        {
-            "name": "funtogo3",
-            "image": "./Assets/Images/Apps/addApp.png"
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
         },
 
         {
-            "name": "AddApp",
-            "image": "./Assets/Images/Apps/netflix.jpg"
-        },
-        {
-            "name": "funtogo",
-            "image": "./Assets/Images/Apps/addApp.png"
+            "name": "Netflix",
+            "image": "./Assets/Images/Apps/netflix.jpg",
+            "url": "https://netflix.com",
+            "dementions": 256
         }
     ],
-    "GAMES": [],
+    "GAMES": [
+        {
+            "name": "funtogo",
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
+        },
+        {
+            "name": "funtogo2",
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
+        }
+    ],
     "SETTINGS": [
         {
             "name": "add_remove_edit",
-            "image": "./Assets/Images/UI/add_remove_edit.png"
+            "image": "./Assets/Images/UI/add_remove_edit.png",
+            "dementions": 256
         },
         {
             "name": "networking",
-            "image": "./Assets/Images/UI/networking.png"
+            "image": "./Assets/Images/UI/networking.png",
+            "dementions": 256
         },
         {
             "name": "display",
-            "image": "./Assets/Images/UI/display.png"
+            "image": "./Assets/Images/UI/display.png",
+            "dementions": 256
         },
         {
             "name": "general",
-            "image": "./Assets/Images/UI/general.png"
+            "image": "./Assets/Images/UI/general.png",
+            "dementions": 256
         }
     ]
 
