@@ -26,26 +26,30 @@ class Menu:
         self.height = height
         self.surface = pygame.Surface((self.width, self.height),pygame.SRCALPHA)
         self.transparency = 0
-        #Creates multiple transparents rects on menu
-        #self.backgrounds: list[pygame.Rect] = []
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.is_displayed = False
         self.is_selected = False
         self.is_locked = False
+        self.auto_hide = False
         self.is_button_list = False #list of buttons need to change this var name
         self.is_menu_list = False
         self.parent_menu:Menu = parent_menu if parent_menu != None else self
         #need to keep track of menus positioning on Canvas this is done by offseting the postion based on the parent menus positioning. 
         self.absolute_rect = pygame.Rect(self.x + self.parent_menu.x, self.y + self.parent_menu.y, self.width, self.height) if self.parent_menu != self else self.rect
         self.sub_menus: List[Menu] = []
-        self.sub_menus_dict: dict = {} 
         self.button_matrix:  List[List[Button]] = [[]]
+        #creating dictionaries for easy refrence
+        self.sub_menus_dict: dict = {}
+        self.button_dict: dict = {}
         self.input_boxs_fields = []
         self.input_boxes: list[TextInput] = []
         self.text_window: TextWindow = TextWindow(self.x, self.y, self.width, self.height, self, messsage='NotSet', name='Default')#Creates a text window on menu if one exists
         self.button_action_map = {}
         #menu state fields assign addional variables based on states of menus
         self.last_button_selected = None 
+        self.sub_menus_buttons_active: list[Button]= []
+        #button to activate menu when selected 
+        self.activate_button: Button = Button(0, 0, 0, 0, self)
     
     def display_text_window(self):
         self.text_window.display()
@@ -56,8 +60,17 @@ class Menu:
         for button in self._get_all_buttons():
             button.display()
             self.last_button_selected = button if button.is_selected else self.last_button_selected
-     
+    def listener(self):
+        """updates states"""
+        self.sub_menus_buttons_active = self._update_submenus_selected_buttons()
+        if self.activate_button.is_selected and self.parent_menu.is_locked == False:
+            self.is_displayed = True
+        elif self.auto_hide:
+            self.is_displayed = False
+
     def display(self):
+        """Displays all buttons text windows input boxs and buttons on menu"""
+        self.listener()
         if self.is_displayed:
             if self.text_window.name != 'Default':
                 self.text_window.display()
@@ -78,14 +91,14 @@ class Menu:
             else:
                 transparency = self.transparency
             pygame.draw.rect(self.surface, (0,0,0,transparency), (0,0,self.width, self.height),border_radius=self.radius)
-        
     
     def _get_total_buttons_count(self):
-        """this is used to determine movement how many rows to create and movement on menu"""
+        """this is to determine how many rows"""
         total_buttons = 0
         for row in self.button_matrix:
             total_buttons += len(row)
         return total_buttons
+    
     def _get_all_buttons(self):
         """Loops through button matrix and appends all to a single list"""
         all_buttons = []
@@ -151,8 +164,11 @@ class Menu:
                 new_button.image = pygame.transform.scale(image, (button_width, button_height))
                 new_button.is_image = True
 
+            self.button_dict[button_name] = new_button
+
     
     def _set_button_actions(self):
+        """set the button actions based on a dict of methods"""
         for button_list in self.button_matrix:
             for button in button_list:
                 if button.name in self.button_action_map:
@@ -174,13 +190,18 @@ class Menu:
         
         return menu_list
     
-    def _convert_submenu_list_to_dict(self) -> Dict:
-        sub_menu_dict = {}
+    def _update_submenu_dict(self) -> None:
+        """using this is for easy refrence of menus, but have not utilized yet"""
         for menu in self.sub_menus:
-            sub_menu_dict[menu.name] = menu
-        return sub_menu_dict
+            self.sub_menus_dict[menu.name] = menu
             
-    
+    def _update_submenus_selected_buttons(self) -> List:
+        """creates list of buttons on submenus that are currenlty in the selected state"""
+        selected_buttons = []
+        for menu in self._get_all_submenus():
+            selected_buttons.append(menu.last_button_selected)
+        return selected_buttons
+
     def _print_button_matrix(self):
         """adding a diagnostic method to look at the matrix"""
         #del when done
@@ -260,6 +281,8 @@ class Button:
             self.text.highlighted = True
         else:
             self.text.highlighted = False
+    
+        
 
 class Text:
     """creates text for buttons"""

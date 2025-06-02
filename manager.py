@@ -11,6 +11,7 @@ class MenuManager:
     def __init__(self) -> None:
         #Defining the base menu (side_menu) 
         self.side_menu: Menu = setup_side_menu(self)
+        self.side_menu.is_menu_list = True
         #keep track of what is currently selected, in listener the menu and button are activated and de-activated
         self._selected_menu: Menu = self.side_menu
         self._selected_button: Button = self.side_menu.button_matrix[0][0]
@@ -18,23 +19,16 @@ class MenuManager:
         self.action_state = "Not_Set"
         
     def _activate_menu(self):
-        #self.side_menu.display()
         for menu in self._get_all_menus():
+            #do not deactivate side menu
             if menu != self.side_menu:
-                if self._selected_button.name == menu.name and self._selected_button in self.side_menu.button_matrix[0]:
-                    #ensure the menu is submenu of button on parent menu  
-                    #if menu in self._selected_button.menu.sub_menus:
-                    if menu in self.side_menu.sub_menus:
-                        menu.is_displayed = True
-                    else:
-                        menu.is_displayed = False
-                elif menu == self._selected_menu:
+                if menu == self._selected_menu:
                     menu.is_selected = True
                 #The side menu is locked because another menu has been activated 
                 elif self.side_menu.is_locked == False:
                     menu.is_displayed = False
             menu.display()
-
+    
     def _get_all_menus(self) -> List[Menu]:
         """Returns a list of all menus, including all nested submenus."""
         menu_list: List[Menu] = [self.side_menu]
@@ -69,6 +63,7 @@ class Manager:
             self.button_index, self.row = self.menu_mgr._selected_menu._get_active_button_idx_row()
             self.total_rows = len(self.menu_mgr._selected_menu.button_matrix)
             self.col = self.button_index % self.total_buttons
+        #Tells the selected button that it is selected
         if self.menu_mgr._selected_button.is_selected == False:
             self.sound.play()
             self.menu_mgr._selected_button.is_selected = True
@@ -210,7 +205,7 @@ class Manager:
         self._select_first_last()
     
     def _select_first_last(self) -> None:
-        """Select the first or last selected button"""
+        """Select the first or previously selected button"""
         menu = self.menu_mgr._selected_menu
         if len(menu.button_matrix[0])>0: 
             self.menu_mgr._selected_button = menu.last_button_selected if menu.last_button_selected != None else menu.button_matrix[0][0]

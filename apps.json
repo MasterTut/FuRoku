@@ -40,7 +40,18 @@
             "dementions": 256
         }
     ],
-    "GAMES": [],
+    "GAMES": [
+        {
+            "name": "funtogo",
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
+        },
+        {
+            "name": "funtogo2",
+            "image": "./Assets/Images/Apps/addApp.png",
+            "dementions": 256
+        }
+    ],
     "SETTINGS": [
         {
             "name": "add_remove_edit",
