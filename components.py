@@ -165,7 +165,7 @@ class Menu:
                 new_button.is_image = True
 
             self.button_dict[button_name] = new_button
-
+    
     
     def _set_button_actions(self):
         """set the button actions based on a dict of methods"""
