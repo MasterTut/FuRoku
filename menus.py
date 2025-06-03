@@ -151,9 +151,8 @@ def setup_app_customization_menu(manager) -> Menu:
     #add another menu for displaying apps on customization menu 
     for menu_name in CUSTOM_MENU_DATA:
         if menu_name != "SETTINGS":
-            x_pos_sub_menu = 20
-            width = int(Canvas.get_width() - (x_pos_sub_menu +50))
-            new_menu = import_apps(menu_name, CUSTOM_MENU_DATA[menu_name], width, x_pos_sub_menu, y_pos=vertical_pos,button_dementions =48)
+            width = int(Canvas.get_width() -400)
+            new_menu = import_apps(menu_name, CUSTOM_MENU_DATA[menu_name], width, 40, y_pos=vertical_pos,button_dementions =48)
             new_menu.activate_button = app_customization_menu.sub_menus_dict['menu_select'].button_dict[menu_name]
             new_menu.auto_hide = True
             new_menu.transparency = 30
