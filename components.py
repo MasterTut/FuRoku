@@ -34,7 +34,7 @@ class Menu:
         self.is_button_list = False #list of buttons need to change this var name
         self.is_menu_list = False
         self.parent_menu:Menu = parent_menu if parent_menu != None else self
-        #need to keep track of menus positioning on Canvas this is done by offseting the postion based on the parent menus positioning. 
+        #need to keep track of menus positioning on Canvas this is done by offseting the postion based on the parent menus positioning. Parent menu needs used on intializtion for this to work 
         self.absolute_rect = pygame.Rect(self.x + self.parent_menu.x, self.y + self.parent_menu.y, self.width, self.height) if self.parent_menu != self else self.rect
         self.sub_menus: List[Menu] = []
         self.button_matrix:  List[List[Button]] = [[]]
@@ -239,6 +239,7 @@ class Button:
         y_offset = self.y + self.menu.absolute_rect.y
 
         return pygame.Rect(x_offset,y_offset, self.width, self.height)
+    
     def action(self):
         """define the action the button takes when clicked or enter is pressed"""
         print(self.name)
@@ -264,9 +265,10 @@ class Button:
                 #This is just to ensure scaled_image is returned may change this later to include other image sizes
                 scaled_image = pygame.transform.smoothscale(self.image, (300,300))
             self.menu_surface.blit(scaled_image, (self.rect.x -22, self.rect.y -25))
-            #mouse_pos = pygame.mouse.get_pos()
+            mouse_pos = pygame.mouse.get_pos()
             #print("Mouse is at:", mouse_pos)
-            #print(self.name, self.rect.x, self.rect.y)
+            #print('rect',self.name, self.rect.x, self.rect.y)
+            #print('a_rect', self.absolute_rect)
             
         else:
             self.menu_surface.blit(self.image, self.rect)

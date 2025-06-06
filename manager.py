@@ -224,8 +224,8 @@ class Manager:
         all_buttons = selected_menu._get_all_buttons()
         for button in all_buttons:
             if button.absolute_rect.collidepoint(mouse_pos):
-                print('rect', mouse_pos, button.rect) 
-                print('a_rect', mouse_pos, button.absolute_rect) 
+                #print('rect', mouse_pos, button.rect) 
+                #print('a_rect', mouse_pos, button.absolute_rect) 
                 self.menu_mgr._selected_button = button
                 self._deselect_all_buttons()
 

@@ -16,9 +16,9 @@ def read_file()-> Dict:
            data = json.load(apps)
        return data
 
-def import_apps(menu_name, apps_list,width,x_pos,y_pos, button_dementions: int = 256) -> Menu:
+def import_apps(menu_name, apps_list,width,x_pos,y_pos,parent_menu, button_dementions: int = 256) -> Menu:
        """Import Menus and Image Buttons from json example: Apps { Name: Netflix, CMD: chromium..."""
-       new_menu = Menu(x_pos, y_pos, width, Canvas.get_height(), menu_name)
+       new_menu = Menu(x_pos, y_pos, width, Canvas.get_height(), menu_name, parent_menu=parent_menu)
        new_menu._set_buttons(apps_list, button_width=button_dementions, button_height=button_dementions)
 
        return new_menu
@@ -41,7 +41,7 @@ def setup_side_menu(manager) -> Menu:
         
         x_pos_sub_menu = int(Canvas.get_width() * .15)
         width = int(Canvas.get_width() - (x_pos_sub_menu +50))
-        new_menu = import_apps(menu_name, CUSTOM_MENU_DATA[menu_name], width, x_pos_sub_menu, y_pos=0)
+        new_menu = import_apps(menu_name, CUSTOM_MENU_DATA[menu_name], width, x_pos_sub_menu, y_pos=0, parent_menu=side_menu)
         side_menu.sub_menus.append(new_menu)
 
         for button in CUSTOM_MENU_DATA[menu_name]:
@@ -77,8 +77,10 @@ def setup_side_menu(manager) -> Menu:
     #Setting APPs Actions to active Menus on sideMenu
     if settings_menu:
         for submenu in settings_menu.sub_menus:
+            print(submenu.name)
             def _activate_menu():
                 manager._selected_menu = submenu
+                print('true')
                 submenu.is_displayed = True
                 manager._selected_menu = manager._selected_menu.sub_menus[0]
                 manager.side_menu.is_locked = True
@@ -152,11 +154,11 @@ def setup_app_customization_menu(manager) -> Menu:
     for menu_name in CUSTOM_MENU_DATA:
         if menu_name != "SETTINGS":
             width = int(Canvas.get_width() -400)
-            new_menu = import_apps(menu_name, CUSTOM_MENU_DATA[menu_name], width, 40, y_pos=vertical_pos,button_dementions =48)
+            new_menu = import_apps(menu_name, CUSTOM_MENU_DATA[menu_name], width, 40, y_pos=vertical_pos,button_dementions =48, parent_menu=app_customization_menu)
             new_menu.activate_button = app_customization_menu.sub_menus_dict['menu_select'].button_dict[menu_name]
             new_menu.auto_hide = True
             new_menu.transparency = 30
-            new_menu.parent_menu = app_customization_menu
+            #new_menu.parent_menu = app_customization_menu
             app_customization_menu.sub_menus.append(new_menu)
             #setting the buttons dynamicly depending on what button is selected 
             for button_list in new_menu.button_matrix:
